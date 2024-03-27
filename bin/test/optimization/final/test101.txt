@@ -1,0 +1,53 @@
+//cse
+
+main
+int a,b,c,d,e,f,g,h;
+
+function foo() : void {
+	a = 7;
+    b = a + 2;
+    c = a + b;
+    d = c + b;
+    b = c + b;
+    a = a + b;
+    e = c + d;
+    f = c + d;
+    g = a + b;
+    h = e + f;
+
+    //g and h are live
+    call printInt(g); // 57 
+    call printInt(h); // 82 
+};
+
+function bar(int x, int y) : void {
+
+    int a,b,c,d;
+
+
+    a = x + y;
+    b = x + 2;
+    c = 2 + x; 
+    d = 1 * (x + 2);
+    if (x > y) then
+        d = x + y;
+        b = 0 - (x+2);
+        x = x + 1;
+    else 
+        d = x + 2;
+        y = 2 + x;
+    fi;
+    a = x + y;
+
+    g = a + b;
+    h = c + d;
+
+    //g and h are live
+    call printInt(g); 
+    call printInt(h);   
+};
+
+{
+    call foo();
+
+}.

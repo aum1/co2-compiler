@@ -1,0 +1,37 @@
+main
+
+int lower, upper, totalOdd;
+
+function isOdd (int x) : bool
+{
+    return x % 2; // Incorrect
+};
+
+function numOddsRange (int a, int b) : int
+{
+    int count;
+
+    if (a > b) then
+        return 0; // Should be fine
+    fi;
+
+    count = 0;
+
+    while (a < b) do
+        if (call isOdd(a)) then // Should be fine even though return is wrong
+            count++;
+        fi;
+        a++;
+    od;
+
+    return count > 0; // Not fine
+};
+
+{
+    lower = call readInt();
+    upper = call readInt();
+
+    totalOdd = call numOddsRange(lower, upper);
+    call printInt(totalOdd);
+    call println();
+}.

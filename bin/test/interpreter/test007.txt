@@ -1,0 +1,18 @@
+//Grant Muirheid
+//Reading and printing values in conditional statements
+
+main
+
+int x;
+
+{
+    x = call readInt();
+
+    if (x == 2) then
+        call printInt(x);
+    fi;
+
+    if (call readInt() == 2) then
+        call printInt(6);
+    fi;
+}.

@@ -1,0 +1,26 @@
+// Boolean expressions in nested if statement and early return statement
+
+main
+
+bool a, b;
+int x, y; 
+float z;
+
+{
+    a = call readBool();
+    b = true;
+    
+    x = 14;
+    y = 5;
+    z = call readFloat();
+
+    if (not (a and b) and (z < x)) then
+        if (z >= y) then
+            call printFloat(z);
+        fi;
+    else 
+        return;
+    fi;
+
+    call printInt(x + y);
+}.

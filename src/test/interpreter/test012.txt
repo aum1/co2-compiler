@@ -1,0 +1,30 @@
+// Alex Garza - Assortment of boolean expression in combination with eachother 
+
+main
+
+bool a, b, e;
+int c, d;
+
+{
+    a = false;
+    b = call readBool();
+
+    c = 4;
+    d = call readInt();
+
+    call printBool(a);
+    call printBool(b);
+    call printInt(c);
+    call printInt(d);
+    
+    call printBool(c == d);
+
+    call printBool((c != d) and b);
+
+    call printBool((c < d) or (a or b));
+
+    e = not((d > c) and (c > d));
+
+    call printBool(e);
+    
+}.

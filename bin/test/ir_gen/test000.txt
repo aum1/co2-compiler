@@ -1,0 +1,29 @@
+main
+
+float fX;
+int x;
+bool z;
+int y;
+
+{
+
+    if (false) then
+        call println();
+    else
+        call println();
+    fi;
+
+    if (true) then
+        call println();
+    else
+        call println();
+    fi;
+
+    if (true) then
+        call println();
+    fi;
+
+    if (false) then
+        call println();
+    fi;
+}. 

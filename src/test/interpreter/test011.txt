@@ -1,0 +1,17 @@
+// Devan Shea
+// Testing for calls within function calls
+
+main
+
+int x;
+
+{
+    x = 5;
+    
+    if (x == call readInt()) then
+        call printInt(x);
+    else
+        x = -1;
+        call printInt(x);
+    fi;
+}.

@@ -1,0 +1,21 @@
+// Fibonacci Computation
+
+main
+
+/* Create variable to store function result */
+int f;
+
+/* Implement recursive function */
+function fibonacci(int series_num) : int
+{
+    if ((series_num == 0) or (series_num == 1)) then
+        return 1;
+    fi;
+    return call fibonacci(series_num - 1) - call fibonacci(series_num - 2);
+};
+
+/* Call function, use the result for printInt() */
+{
+    f = call fibonacci(12);
+    call printInt(f);
+}.

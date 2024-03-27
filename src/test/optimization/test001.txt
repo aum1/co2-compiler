@@ -1,0 +1,18 @@
+// Aum Palande
+// Common Subexpression Elimination and uncalled function
+
+main
+
+int x;
+int y;
+int z;
+int w;
+
+
+{	
+    x = 1;
+    z = x;
+    y = x + 2; 
+    z = x + 2;
+
+}.

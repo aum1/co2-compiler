@@ -1,0 +1,20 @@
+CP: Assigned x to the constant value 51.
+CP: Assigned t3 to the constant value 51.
+CP: Assigned t1 to the constant value 2.
+CP: Assigned t6 to the constant value 2.
+CP: Assigned t4 to the constant value 51.
+DCE: Warning, Uninitialized variable y. Set y to 0.
+DCE: Warning, Uninitialized variable z. Set z to 0.
+DCE: Removed instruction 10, as instruction was dead.
+DCE: Removed instruction 6, as instruction was dead.
+DCE: Removed instruction 2, as instruction was dead.
+DCE: Removed instruction 1, as instruction was dead.
+DCE: Removed instruction 0, as instruction was dead.
+DCE: Removed instruction 9, as instruction was dead.
+DCE: Removed instruction 8, as instruction was dead.
+DCE: Removed instruction 7, as instruction was dead.
+DCE: Removed instruction 5, as instruction was dead.
+DCE: Removed instruction 4, as instruction was dead.
+DCE: Removed instruction 3, as instruction was dead.
+DCE: Removed instruction 11, as instruction was dead.
+DCE: Removed instruction 12, as instruction was dead.

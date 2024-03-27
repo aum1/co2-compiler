@@ -1,0 +1,14 @@
+// Grant Martinez
+// Testing multiple types of errors mixed in with valid tokens
+
+main
+
+int dollarInFront             = $1
+
+float forgotToFinishThisFloat = 345.
+
+float floatCombinedWithWord   = 24.five
+
+float floatWithInvalid        = 98.~
+
+int invalid_name@23 = 12

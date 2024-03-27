@@ -1,0 +1,11 @@
+// Isuranga Perera
+// Test to check expressions with whitespaces are correctly tokenized
+/ / //
+main
+
+float positiveFloat = ==  12.564 .234;
+float positiveFloat = - 12.48  .0;
+
+int temp1 temp2 += 4  + 5;
+mainif
+main if

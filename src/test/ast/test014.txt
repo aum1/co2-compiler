@@ -1,0 +1,25 @@
+//Darwin Mohajeri
+// Testing nested loops
+
+main
+
+int i;
+int j;
+int n1;
+int n2;
+
+{
+    i = 5;
+    j = 10;
+    n1 = 0;
+    n2 = 0;
+    while(n1 < i) do
+        n2 = 0;
+        while(n2 < j) do
+            call printInt(n2);
+            n2++;
+        od;
+        call printInt(n1);
+        n1++;
+    od;
+}.

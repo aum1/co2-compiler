@@ -1,0 +1,22 @@
+// Spencer Banasik
+// Ensure that subtraction vs negation is valid, that our identifiers follow
+// the constraints set by the grammar, if tabs are included in whitespace,
+// a tricky comment scanning case,
+// and finally, if we handle how windows adds newlines for portability reasons
+// the character used is \r which always appears before a \n.
+
+main
+
+int ourfirst_var = - 15.5;
+float 5is_this_valid = -15.5; // The name shouldn't be valid, a 5 and the identifier is the result
+int _how_about_this = 5.; // The name shouldn't be valid, an error and the identifier is the result
+
+Start				tabs
+
+// Can the comments handle /*/ or does it accept that as a start and end
+/*/* The below is just an experiment! */*/
+
+// does a backslash escape the newline? \
+ifnot,thisshouldbe45,three_identifiers
+
+

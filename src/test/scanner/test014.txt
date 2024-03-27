@@ -1,0 +1,8 @@
+// Brendan Fattig
+// testing nested comparisons
+
+main
+
+function isOdd (int n) : bool {
+    return (n % 2 == 0) == true;
+}

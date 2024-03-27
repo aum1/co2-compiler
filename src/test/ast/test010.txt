@@ -1,0 +1,22 @@
+// Aum Palande
+// Tests nested if statements with loops
+
+main
+
+int x;
+int y;
+
+{
+    x = 10;
+    y = 0;
+
+    
+    if (true) then
+        if (y > -1) then 
+            while (x > 0) do
+                call printInt(x);
+                x--;
+            od;
+        fi;
+    fi;
+}.

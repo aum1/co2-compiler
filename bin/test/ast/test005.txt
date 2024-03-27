@@ -1,0 +1,37 @@
+main
+
+int x, y;
+
+/* 
+ * not all paths return - while this is undesirable, 
+ * unfortunately this is not something we can detect now 
+ */
+function max (int a, int b) : int {
+    if (a > b) then
+        return a;
+    else 
+        // return b;
+        a = b; 
+    fi;
+};
+
+/* 
+ * However, we can still detect if there a branch returning wrong type
+ * Even though this is not comprehensive - we need a static analysis
+ * to have better coverage
+ */
+
+function coolFunc(int a) : int{
+    if ( a > x ) then
+        return a;
+    else
+        return ( a > x ); // should trigger error here
+    fi;
+};
+
+
+{
+    x = 5;
+    y = 3;
+    call printInt(call max(x, y));
+}.

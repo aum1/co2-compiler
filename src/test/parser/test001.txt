@@ -1,0 +1,13 @@
+// Array creation test
+//  Test that arrays are validated properly and created correctly.
+main
+
+int arr0;
+int[2] arr1;
+int[2][2] arr2;
+int[3][1][2] arr3;
+
+{
+    x = 1;
+
+}.

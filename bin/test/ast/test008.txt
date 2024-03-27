@@ -1,0 +1,78 @@
+// Tests array return type used inside function arguments
+// Tests scope leak of variables
+// Tests future functions with same name, but different array args (cannot simply use an int array)
+
+main
+
+int[5] x, y, z;
+int[3][5] all;
+int i;
+
+function arrayCopy(int[] src, int[] dest, int length) : void {
+    int i;
+
+    i = 0;
+    while (i < length) do
+        dest[i] = src[i];
+    od;
+};
+
+function arrayInit(int[] dest, int length, int init) : void {
+    int i;
+
+    i = 0;
+    while (i < length) do
+        dest[i] = init;
+    od;
+};
+
+function itod(int[] dest, int length) : void {
+    int i;
+
+    i = 0;
+    while (i < length) do
+        dest[i] = i;
+    od;
+};
+
+
+// Calls future function and tests scope leak
+function printArray(int[][] arr, int cols, int rows) : void {
+    int i;
+
+    i = 0;
+    while ((i < rows) and (rows > 0)) do
+        call printArray(arr[i], cols);
+    od;
+};
+
+function printArray(int[] arr, int length) : void {
+    int i;
+
+    i = 0;
+    while ((i < length) and (length > 0)) do
+        call printInt(arr[i]);
+    od; 
+};
+
+{
+    call itod(x, 5);
+    call printInt(i); // Should be 0; No out of scope leak
+
+    call arrayInit(y, 5, -1);
+    call arrayInit(z, 5, 10);
+    call printInt(i); // Should be 0; No out of scope leak
+
+//    call arrayCopy(all[0], x, 5);
+//    call arrayCopy(all[1], y, 5);
+//    call arrayCopy(all[2], z, 5);
+
+    call arrayCopy(x, y, 5);
+    call arrayCopy(z, x, 5);
+    call arrayCopy(y, z, 5);
+
+    call printArray(x, 5);
+    call printArray(z, 5);
+
+    call printArray(all, 3, 5);
+}.

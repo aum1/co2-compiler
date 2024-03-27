@@ -1,0 +1,13 @@
+main
+
+int x;
+int y;
+int z;
+int a;
+bool w;
+
+{
+    x = y;
+    x = 1;
+    x = 12;
+}.

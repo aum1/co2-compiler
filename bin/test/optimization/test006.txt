@@ -1,0 +1,12 @@
+main
+int a;
+
+// Constant Folding and Constant Propagration
+{
+    a = ( ( ( 2 + 1 ) * 2 ) / 2 ) - 1;
+    call printInt(a); // 2
+    call println();
+    a = 5*3+7;
+    call printInt(a);  // 22
+    call println();
+}.

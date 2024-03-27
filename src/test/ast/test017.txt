@@ -1,0 +1,24 @@
+// Brendan Fattig
+// function overloading
+
+
+main
+
+bool one;
+int two;
+
+function testFunction (int x) : bool
+{
+    return x == 2;
+};
+
+function testFunction (int a, int b) : int
+{
+    return a - b;
+};
+
+{
+    one = call testFunction(2);
+    two = call testFunction(1,2);
+    
+}.

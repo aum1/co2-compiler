@@ -1,0 +1,8 @@
+main {
+    call println(5); // 1 type error
+
+    call printInt(call readInt() + call readInt()); // fine
+
+    call printInt(1 + call println(5+3) ); // 2 type errors 
+
+}.

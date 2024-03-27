@@ -1,0 +1,13 @@
+// Haden Johnson
+// Testing float errors
+
+float 3.14
+
+1. // error
+
+float .1 //  error
+1234.356
+12.34.45.56
+14.14 14.
+34 .56
+5.5identify

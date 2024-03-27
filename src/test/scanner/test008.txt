@@ -1,0 +1,11 @@
+// Aum Palande
+// Testing ident names and whitespace
+
+main
+
+
+int variable_one_1 = == 10;
+
+int var_24_$ = - 12;
+
+bool x_y_z ==== 3;

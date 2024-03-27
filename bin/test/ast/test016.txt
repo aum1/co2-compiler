@@ -1,0 +1,21 @@
+// Arvind Murthy
+// testing recursive function calls
+
+main
+
+int a;
+int b;
+
+function Fibo(int x) : int
+{
+    if ((x == 1) or (x == 0)) then
+        return 1;
+    else 
+        return call Fibo(x - 1) + call Fibo(x - 2);
+    fi;
+};
+
+{
+    a = 3;
+    b = call Fibo(a);
+}.

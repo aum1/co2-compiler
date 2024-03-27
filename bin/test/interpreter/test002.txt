@@ -1,0 +1,25 @@
+// Tests not, relative ops, and call inside relation
+
+main
+
+{
+    // Check not handling
+    if(not(not(1==0))) then
+        call printInt(-3);
+    else
+        call printInt(3);
+    fi;
+
+    // Check rel operators
+    if(-1 < 1) then 
+        call printInt(4);
+    else
+        call printInt(-4);
+    fi;
+    
+    if(1 >= call readInt()) then
+        call printInt(5);
+    else
+        call printInt(-5);
+    fi;
+}.

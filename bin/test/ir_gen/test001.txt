@@ -1,0 +1,13 @@
+main
+
+
+int y;
+int x;
+int z;
+
+{
+    x = 51;
+    y = 2 * x + y;
+    x = x + y * 2 + z;
+    call printInt(y);
+}.

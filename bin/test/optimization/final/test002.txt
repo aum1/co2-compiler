@@ -1,0 +1,57 @@
+// Spencer Banasik
+// Additional constant folding edge cases
+
+main
+
+int a;
+int b;
+int c;
+int d;
+bool e;
+bool f;
+float g;
+float h;
+
+{	
+    a = 5;
+    // Are these operations handled?
+    b = a % a;
+    b = a / a;
+    b = a - a;
+    b = a / 1;
+    b = a + 0;
+    b = 0 + a;
+    b = a - 0;
+    // Is this handled for floats?
+    g = 5.0;
+    h = g + 0.0;
+    h = g - 0.0;
+    h = g * 1.0;
+    h = g / 1.0;
+    h = g * 0.0;
+    h = 0.0 / g;
+    // Are same relations considered?
+    if (a < a) then
+        c = 5
+	  fi;
+    if (a > a) then
+        c = 6
+	  fi;
+    if (a >= a) then
+        c = 7
+	  fi;
+    if (a <= a) then
+        c = 8
+	  fi;
+    if (a == a) then
+        c = 9
+	  fi;
+    if (a != a) then
+        c = 10
+	  fi;
+    // How about boolean logic?
+    e = true;
+    f = e AND false;
+    e = false;
+    f = e OR true;
+}.

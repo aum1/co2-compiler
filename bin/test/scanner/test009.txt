@@ -1,0 +1,9 @@
+// Grant Muirheid
+// Testing that the parser can separate integers from identifiers
+
+main
+
+int myvar1 = 5;;
+int 2myvar = 3a;
+
+bool a = myvar1 + 2myvar;

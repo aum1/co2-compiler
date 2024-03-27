@@ -1,0 +1,51 @@
+main
+
+//dce local
+
+function early_return () : int
+{
+    int c, d, unused;
+
+    c = 1; // dce - overwritten
+    c = 2;
+    unused = c / d; // dce - unused
+    return c * d;
+    call printInt(c * d); // dce - unreachable
+};
+
+function unreachableIf () : void
+{
+    int c, d;
+
+    c = 1;
+    d = 2;
+    if (d == c) then
+        d = c;
+    fi;
+
+    if (false) then
+        call println();
+    else
+        call println();
+    fi;
+
+    if (true) then
+        call println();
+    else
+        call println();
+    fi;
+
+    if (true) then
+        call println();
+    fi;
+
+    if (false) then
+        call println();
+    fi;
+
+};
+
+{
+    call unreachableIf();
+    call printInt(call early_return());
+}.

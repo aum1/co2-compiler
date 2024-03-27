@@ -1,0 +1,6 @@
+// Alex Garza
+// Testing sequential punctuation marks with a mixed float to differentiate between period and float
+
+main
+
+;.,:()[]{}2.22.

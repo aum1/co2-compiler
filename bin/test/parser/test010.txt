@@ -1,0 +1,19 @@
+// Aum Palande
+// Handle if/else statement inside of a repeat loop
+
+main
+
+int x;
+int y;
+
+{
+    x = 0;
+    y = 10;
+    repeat
+    	if (x == 9) then
+        	x++;
+    	else 
+        	x+=2;
+    	fi;
+    until (x == y);
+}.

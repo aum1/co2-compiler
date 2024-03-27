@@ -1,0 +1,9 @@
+// Devan Shea
+// Testing for calling wrong type for function
+main
+
+bool x = true;
+
+{
+    call printInt(x);
+}.

@@ -1,0 +1,39 @@
+// expressions within function call and return for all types
+
+main
+
+int x, y, z;
+float a, b, c;
+bool i, j, k;
+
+{
+    // int
+    x = 1;
+    y = 2;
+    z = 3;
+
+    call printInt(x + y + z);
+
+    // float
+    a = 1.0;
+    b = 2.1;
+    c = 3.2;
+
+    call printFloat(a + b + c);
+
+    // bool
+    i = true;
+    j = false;
+    k = true;
+
+    call printBool(i and j or k);
+
+    // mixed
+    call printBool((x + y + z < x - y - z) or i and not(j or k));
+
+    // func call
+    call printInt(x + call readInt() + z);
+
+    // return
+    return (x + y + z);
+}.

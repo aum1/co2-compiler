@@ -1,0 +1,15 @@
+// Andrew Jack Roehr
+// Testing negative number/decrement ambiguity
+// Test further comments
+// These both tripped up my parser a bit
+
+main
+
+int test_neg_int = -12;
+float test_neg_float = -3.0;
+test_neg_int--;
+
+/* asdf
+  */ // qwerty
+test_neg_float--;
+/* end test */

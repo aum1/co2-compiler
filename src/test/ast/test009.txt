@@ -1,0 +1,19 @@
+// Isuranga Perera
+// Tests recursive calls
+
+main
+
+int[3][4][2] arr;
+int x,y;
+bool m;
+
+function foo(int x, int y) : bool
+{
+    return call foo(x, y);
+};
+
+{
+    x = 1;
+    y = 2;
+    m = call foo(arr[1][x][1],y);
+}.

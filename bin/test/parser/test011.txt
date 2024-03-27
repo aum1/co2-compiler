@@ -1,0 +1,27 @@
+// Grant Muirheid
+// Missing statement between semicolons
+
+main
+
+float x, y;
+int a, b;
+bool e, f, g;
+
+{
+    x = 2.0;
+    y = 3.0;
+    x = x + y;
+
+    f = false;
+    e = f;
+
+    if (3 == 3) then
+        call println(x);
+    fi;
+
+    call println(2);
+    x = 8.0;; //Should throw syntax error here
+
+    call println(x);
+}.
+

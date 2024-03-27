@@ -1,0 +1,20 @@
+// read and print int const and vars
+main
+
+int x;
+float fX;
+bool bX;
+
+{
+
+
+    fX = 1.0;
+    x = 1;
+    x += 12;
+
+    call printFloat(fX + 3.14);
+    call printInt(x * 3);
+    call println();
+
+
+}.

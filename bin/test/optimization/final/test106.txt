@@ -1,0 +1,35 @@
+main
+
+// dce global vars
+
+int a,x,y,z,m,n;
+
+function foo(int x, int y, int a): int {
+    while(x > 0) do // phi only for x and a
+        a = a + y;
+        x -= 1;
+    od;
+    return a + y;
+};
+
+function bar(): void {
+    call printInt(x);
+    call printInt(y);
+    call printInt(a);
+    call printInt(n); // global prints
+    z = a + y;
+};
+
+{
+    m = call readInt();
+    n = call readInt(); // cannot eliminate
+    z = call foo(m,n,0);
+    call printInt(z);
+
+    x = m + 1;
+    y = n;
+    a = 100;
+    // cannot eliminate these as used in bar
+    call bar();
+    call printInt(z);
+}.

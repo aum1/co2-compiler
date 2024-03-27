@@ -1,0 +1,21 @@
+// Aum Palande
+// Function calls with nested if statements
+main
+
+int x, y, z, a, b;
+
+{
+    a = call readInt();
+    b = call readInt();
+    z = -1;
+    if (a > b) then
+	x = call readInt();
+	y = call readInt();
+	if (x > y) then
+	    z = 1;
+	else 
+	    z = 0;
+	fi;
+    fi;
+    call printInt(z);
+}.
