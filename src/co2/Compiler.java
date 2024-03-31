@@ -2053,7 +2053,13 @@ public class Compiler {
         }
 
         // TODO: Fix, update 
-        while ((currInstructions.get(indexOfLast).getDest() == null)){
+        while ((currInstructions.get(indexOfLast).getDest() == null) && (currInstructions.get(indexOfLast) instanceof Call)){
+            if (currInstructions.get(indexOfLast) instanceof Call) {
+                if (((Call) currInstructions.get(indexOfLast)).hasArgs()) {
+                    break;
+                }
+            }
+
             indexOfLast++;
             if (indexOfLast == currInstructions.size()) {
                 return tacList;
@@ -2250,6 +2256,15 @@ public class Compiler {
             }
             if (addInstruction.getRight() instanceof Variable) {
                 referencedVariables.add((Variable) addInstruction.getRight());    
+            }
+        }
+        else if (instruction instanceof Call) {
+            Call callInstruction = (Call) instruction;
+            for (int i = 0; i < callInstruction.getArgs().getExpressionParameters().size(); i++) {
+                if (callInstruction.getArgs().getExpressionParameters().get(i) instanceof VariableReference) {
+                    VariableReference varRef = (VariableReference) callInstruction.getArgs().getExpressionParameters().get(i);
+                    referencedVariables.add(new Variable(varRef.getIdent()));
+                }
             }
         }
     
