@@ -2155,46 +2155,98 @@ public class Compiler {
     }
 
     private Literal getConstantFoldingAddition(Add instruction) {
-        float leftValue = Float.valueOf(((Literal) instruction.getLeft()).getValue().token().lexeme());
-        float rightValue = Float.valueOf(((Literal) instruction.getRight()).getValue().token().lexeme());
-        Token calculatedValue = new Token("" + (leftValue + rightValue), 0, 0);
-        return new Literal(new Symbol(calculatedValue));
-    } 
+        Token leftToken = ((Literal) instruction.getLeft()).getValue().token();
+        Token rightToken = ((Literal) instruction.getRight()).getValue().token();
+        boolean isFloatOperation = leftToken.kind() == Kind.FLOAT_VAL || rightToken.kind() == Kind.FLOAT_VAL;
+    
+        if (isFloatOperation) {
+            float leftValue = Float.parseFloat(leftToken.lexeme());
+            float rightValue = Float.parseFloat(rightToken.lexeme());
+            Token calculatedValue = new Token("" + (leftValue + rightValue), 0, 0);
+            return new Literal(new Symbol(calculatedValue));
+        } else {
+            int leftValue = Integer.parseInt(leftToken.lexeme());
+            int rightValue = Integer.parseInt(rightToken.lexeme());
+            Token calculatedValue = new Token("" + (leftValue + rightValue), 0, 0);
+            return new Literal(new Symbol(calculatedValue));
+        }
+    }
     
     private Literal getConstantFoldingDivision(Div instruction) {
-        float leftValue = Float.valueOf(((Literal) instruction.getLeft()).getValue().token().lexeme());
-        float rightValue = Float.valueOf(((Literal) instruction.getRight()).getValue().token().lexeme());
-        Token calculatedValue = new Token("" + (leftValue / rightValue), 0, 0);
-        return new Literal(new Symbol(calculatedValue));
-    } 
-
+        Token leftToken = ((Literal) instruction.getLeft()).getValue().token();
+        Token rightToken = ((Literal) instruction.getRight()).getValue().token();
+        boolean isFloatOperation = leftToken.kind() == Kind.FLOAT_VAL || rightToken.kind() == Kind.FLOAT_VAL;
+    
+        if (isFloatOperation) {
+            float leftValue = Float.parseFloat(leftToken.lexeme());
+            float rightValue = Float.parseFloat(rightToken.lexeme());
+            Token calculatedValue = new Token("" + (leftValue / rightValue), 0, 0);
+            return new Literal(new Symbol(calculatedValue));
+        } else {
+            int leftValue = Integer.parseInt(leftToken.lexeme());
+            int rightValue = Integer.parseInt(rightToken.lexeme());
+            Token calculatedValue = new Token("" + (leftValue / rightValue), 0, 0);
+            return new Literal(new Symbol(calculatedValue));
+        }
+    }
+    
     private Literal getConstantFoldingModulo(Mod instruction) {
-        float leftValue = Float.valueOf(((Literal) instruction.getLeft()).getValue().token().lexeme());
-        float rightValue = Float.valueOf(((Literal) instruction.getRight()).getValue().token().lexeme());
-        Token calculatedValue = new Token("" + (leftValue % rightValue), 0, 0);
-        return new Literal(new Symbol(calculatedValue));
-    } 
-
+        Token leftToken = ((Literal) instruction.getLeft()).getValue().token();
+        Token rightToken = ((Literal) instruction.getRight()).getValue().token();
+        if (leftToken.kind() == Kind.INT_VAL && rightToken.kind() == Kind.INT_VAL) {
+            int leftValue = Integer.parseInt(leftToken.lexeme());
+            int rightValue = Integer.parseInt(rightToken.lexeme());
+            Token calculatedValue = new Token("" + (leftValue % rightValue), 0, 0);
+            return new Literal(new Symbol(calculatedValue));
+        } else {
+            throw new ArithmeticException("Modulo operation not supported for float values.");
+        }
+    }
+    
     private Literal getConstantFoldingMultiplication(Mul instruction) {
-        float leftValue = Float.valueOf(((Literal) instruction.getLeft()).getValue().token().lexeme());
-        float rightValue = Float.valueOf(((Literal) instruction.getRight()).getValue().token().lexeme());
-        Token calculatedValue = new Token("" + (leftValue * rightValue), 0, 0);
-        return new Literal(new Symbol(calculatedValue));
-    } 
-
+        Token leftToken = ((Literal) instruction.getLeft()).getValue().token();
+        Token rightToken = ((Literal) instruction.getRight()).getValue().token();
+        boolean isFloatOperation = leftToken.kind() == Kind.FLOAT_VAL || rightToken.kind() == Kind.FLOAT_VAL;
+    
+        if (isFloatOperation) {
+            float leftValue = Float.parseFloat(leftToken.lexeme());
+            float rightValue = Float.parseFloat(rightToken.lexeme());
+            Token calculatedValue = new Token("" + (leftValue * rightValue), 0, 0);
+            return new Literal(new Symbol(calculatedValue));
+        } else {
+            int leftValue = Integer.parseInt(leftToken.lexeme());
+            int rightValue = Integer.parseInt(rightToken.lexeme());
+            Token calculatedValue = new Token("" + (leftValue * rightValue), 0, 0);
+            return new Literal(new Symbol(calculatedValue));
+        }
+    }
+    
     private Literal getConstantFoldingPower(Pow instruction) {
-        float leftValue = Float.valueOf(((Literal) instruction.getLeft()).getValue().token().lexeme());
-        float rightValue = Float.valueOf(((Literal) instruction.getRight()).getValue().token().lexeme());
-        Token calculatedValue = new Token("" + Math.pow(leftValue,rightValue), 0, 0);
+        Token leftToken = ((Literal) instruction.getLeft()).getValue().token();
+        Token rightToken = ((Literal) instruction.getRight()).getValue().token();
+        float leftValue = Float.parseFloat(leftToken.lexeme());
+        float rightValue = Float.parseFloat(rightToken.lexeme());
+        Token calculatedValue = new Token("" + Math.pow(leftValue, rightValue), 0, 0);
         return new Literal(new Symbol(calculatedValue));
-    } 
-
+    }
+    
     private Literal getConstantFoldingSubtraction(Sub instruction) {
-        float leftValue = Float.valueOf(((Literal) instruction.getLeft()).getValue().token().lexeme());
-        float rightValue = Float.valueOf(((Literal) instruction.getRight()).getValue().token().lexeme());
-        Token calculatedValue = new Token("" + (leftValue - rightValue), 0, 0);
-        return new Literal(new Symbol(calculatedValue));
-    } 
+        Token leftToken = ((Literal) instruction.getLeft()).getValue().token();
+        Token rightToken = ((Literal) instruction.getRight()).getValue().token();
+        boolean isFloatOperation = leftToken.kind() == Kind.FLOAT_VAL || rightToken.kind() == Kind.FLOAT_VAL;
+    
+        if (isFloatOperation) {
+            float leftValue = Float.parseFloat(leftToken.lexeme());
+            float rightValue = Float.parseFloat(rightToken.lexeme());
+            Token calculatedValue = new Token("" + (leftValue - rightValue), 0, 0);
+            return new Literal(new Symbol(calculatedValue));
+        } else {
+            int leftValue = Integer.parseInt(leftToken.lexeme());
+            int rightValue = Integer.parseInt(rightToken.lexeme());
+            Token calculatedValue = new Token("" + (leftValue - rightValue), 0, 0);
+            return new Literal(new Symbol(calculatedValue));
+        }
+    }    
 
     private Set<Variable> getVariableReferences(TAC instruction) {
         ArrayList<Variable> referencedVariables = new ArrayList<>();
