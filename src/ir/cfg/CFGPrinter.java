@@ -35,6 +35,7 @@ import ir.tac.Return;
 // To print basic block in Dot language
 public class CFGPrinter implements CFGVisitor {
     Set<String> transitionStrings = new HashSet<String>();
+    Set<Integer> blocksVisited = new HashSet<Integer>();
 
     @Override
     public String visit(BasicBlock node) {
@@ -51,6 +52,7 @@ public class CFGPrinter implements CFGVisitor {
                 transitionStrings.add(currNodeTransition);
             }
         }
+
         // remove last arrow
         toReturn = toReturn.substring(0, toReturn.length()-4);
         toReturn += "; \n label = \"bb" + node.getID() + "\";\n } \n";
@@ -89,6 +91,13 @@ public class CFGPrinter implements CFGVisitor {
     public String getSubGraph(BasicBlock node) {
         String toReturn = "";
         toReturn += "subgraph cluster_" + node.getID() + " { \n";
+
+        if (blocksVisited.contains(node.getID())) {
+            return "";
+        }
+        else {
+            blocksVisited.add(node.getID());
+        }
 
         // add instructions in dotgraph format
         List<TAC> instructionList = node.getInstructions().getInstructions();
