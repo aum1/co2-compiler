@@ -15,6 +15,7 @@ public class CompilerTester {
         options.addRequiredOption("s", "src", true, "Source File");
         options.addOption("i", "in", true, "Data File");
         options.addOption("nr", "reg", true, "Num Regs");
+        options.addOption("b", "asm", false, "Print DLX instructions");
         options.addOption("a", "astOut", false, "Print AST");
         // options.addOption("int", "interpret", false, "Interpreter mode");
         
@@ -102,13 +103,12 @@ public class CompilerTester {
             System.exit(-4);
         }
 
-        // if (cmd.hasOption("int")) { // Interpreter mode - at this point the program is well-formed
-        //     c.interpret(in);
-        // } else {
-        //     System.out.println("Success type-checking file.");
-        // }
+        if (cmd.hasOption("int")) { // Interpreter mode - at this point the program is well-formed
+            c.interpret(in);
+        } else {
+            System.out.println("Success type-checking file.");
+        }
 
-        // Dot graph before optimization
         // For IR Visualizer
         String dotgraph_text = null;
         try {
@@ -120,8 +120,6 @@ public class CompilerTester {
                 for (String cfg_output: cfg_output_options) {
                     switch (cfg_output) {
                         case "screen":
-                            System.out.println("Before optimization");
-                            System.out.println("-".repeat(100));
                             System.out.println(dotgraph_text);
                             break;
                         case "file":
@@ -147,13 +145,45 @@ public class CompilerTester {
         // The next 3 lines are for Optimization - Uncomment them out
         String[] optArgs = cmd.getOptionValues("opt");
         List<String> optArguments = (optArgs!=null && optArgs.length != 0) ? Arrays.asList(optArgs) : new ArrayList<String>();
-        dotgraph_text = c.optimization(optArguments, options.hasOption("loop"), options.hasOption("max"));
-        // Dot graph after optimization
-        System.out.println("After optimization");
-        System.out.println("-".repeat(100));
-        System.out.println(dotgraph_text);
+
+        c.optimization(optArguments, options.hasOption("loop"), options.hasOption("max"));
         // we expect after this, there is file recording all transformations your compiler did
         // e.g., if we run -s test000.txt -o cp -o cf -o dce -loop
         // the file will have the name "record_test000_cp_cf_dce_loop.txt"
+        // You might want to output the CFG after optimization as well using the same flag 'cfg' above
+
+        //Register Allocation
+        c.regAlloc(numRegs);
+
+        //Code Gen
+        int[] program = c.genCode();
+        if (c.hasError()) {
+            System.out.println("Error compiling file");
+            System.out.println(c.errorReport());
+            System.exit(-6);
+        }
+
+        if (cmd.hasOption("asm")) {
+            String asmFile = sourceFile.substring(0, sourceFile.lastIndexOf('.')) + "_asm.txt";
+            try (PrintStream out = new PrintStream(asmFile)) {
+                for (int i = 0; i < program.length; i++) {
+                    out.print(i + ":\t" + DLX.instrString(program[i])); // \newline included in DLX.instrString()
+                }
+            } catch (IOException e) {
+                System.err.println("Error accessing the asm file: \"" + asmFile + "\"");
+                System.exit(-7);
+            }
+        }
+
+        //Execute!
+        DLX.load(program);
+        try {
+            DLX.execute(in);
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.out.println("IOException inside DLX");
+            System.exit(-8);
+        }
+
     }
 }

@@ -1,20 +1,14 @@
-CP: Assigned x to the constant value 51.
-CP: Assigned t3 to the constant value 51.
-CP: Assigned t1 to the constant value 2.
-CP: Assigned t6 to the constant value 2.
-CP: Assigned t4 to the constant value 51.
-DCE: Warning, Uninitialized variable y. Set y to 0.
-DCE: Warning, Uninitialized variable z. Set z to 0.
-DCE: Removed instruction 10, as instruction was dead.
-DCE: Removed instruction 6, as instruction was dead.
-DCE: Removed instruction 2, as instruction was dead.
-DCE: Removed instruction 1, as instruction was dead.
-DCE: Removed instruction 0, as instruction was dead.
-DCE: Removed instruction 9, as instruction was dead.
-DCE: Removed instruction 8, as instruction was dead.
-DCE: Removed instruction 7, as instruction was dead.
-DCE: Removed instruction 5, as instruction was dead.
-DCE: Removed instruction 4, as instruction was dead.
-DCE: Removed instruction 3, as instruction was dead.
-DCE: Removed instruction 11, as instruction was dead.
-DCE: Removed instruction 12, as instruction was dead.
+CP: Assigned t10 to the constant value 5.
+CP: Assigned t12 to the constant value 6.
+CP: Assigned t16 to the constant value 1.
+CP: Assigned t6 to the constant value 4.
+DCE: Warning, Uninitialized variable b. Set b to 0.
+DCE: Warning, Uninitialized variable a. Set a to 0.
+DCE: Removed instruction 18, as instruction was dead.
+DCE: Removed instruction 17, as instruction was dead.
+DCE: Removed instruction 16, as instruction was dead.
+DCE: Removed instruction 15, as instruction was dead.
+DCE: Removed instruction 34, as instruction was dead.
+DCE: Removed instruction 14, as instruction was dead.
+DCE: Removed instruction 33, as instruction was dead.
+DCE: Removed instruction 13, as instruction was dead.
