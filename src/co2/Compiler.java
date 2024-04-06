@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Queue;
 import java.util.Set;
@@ -2052,7 +2053,6 @@ public class Compiler {
             return tacList;
         }
 
-        // TODO: Fix, update 
         while ((currInstructions.get(indexOfLast).getDest() == null) && (currInstructions.get(indexOfLast) instanceof Call)){
             if (currInstructions.get(indexOfLast) instanceof Call) {
                 if (((Call) currInstructions.get(indexOfLast)).hasArgs()) {
@@ -2066,8 +2066,6 @@ public class Compiler {
             }
         }
         
-        // TODO: add all vars from curr instruction
-        // TODO: Update get variable refences to work for Call functions that have Argument List
         Set<Variable> firstInstructionReferences = getVariableReferences(currInstructions.get(indexOfLast));
         for (Variable v : firstInstructionReferences) {
             liveVariables.add(v.getSymbol().token().lexeme());
@@ -2322,4 +2320,66 @@ public class Compiler {
     
         return new HashSet<Variable>(referencedVariables);
     }
+
+// Register Allocation ==============================================================
+    public void regAlloc(int numRegs) {
+        // Create graph and edges based on live variable anaysis
+
+        // map from edge and adjacent list to other variables
+        Map<Variable, ArrayList<Variable>> vertices = getVertexGraph();
+        Stack<Variable> removedVertices = new Stack<Variable>();
+        
+        // while graph is not empty
+            // pop out node with < numRegs edges
+            // if no edge has < numRegs, then pop any node and mark as maybeSpilled
+            // remove edges of the node
+            // push node to stack
+        while (vertices.keySet().size() > 0) {
+            boolean wasVertexFound = false;
+            for (Variable currVertex : vertices.keySet()) {
+                // found vertex 
+                if (vertices.get(currVertex).size() < numRegs) {
+                    // remove vertex edges
+                    for (Variable otherVertex : vertices.keySet()) {
+                        vertices.get(otherVertex).remove(currVertex);
+                    }
+                    
+                    // add to stack
+                    removedVertices.add(currVertex);
+                    vertices.remove(currVertex);
+                    wasVertexFound = true;
+                }
+            }
+
+            // didn't find a vertex, pop any mode and mark as maybeSpilled
+            if (!wasVertexFound) {
+                Variable vertexToRemove = (Variable) vertices.keySet().toArray()[0];
+                for (Variable otherVertex : vertices.keySet()) {
+                    vertices.get(otherVertex).remove(vertexToRemove);
+                }
+
+                removedVertices.add(vertexToRemove);
+                vertices.remove(vertexToRemove);
+                // TODO: mark as possible spillages
+            }
+        }
+
+        // while stack is not empty
+            // pop node from stack, insert into graph
+            // mark with specific register (lowest free one)
+        
+    }
+
+    public Map<Variable, ArrayList<Variable>> getVertexGraph() {
+        Map<Variable, ArrayList<Variable>> vertices = new HashMap<>();
+        return vertices;
+    }
+
+// Code Generation ==============================================================
+    public int[] genCode() {
+        return null;
+    }
+
 }
+
+

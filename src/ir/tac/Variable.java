@@ -6,6 +6,7 @@ import ir.cfg.TACVisitor;
 public class Variable implements Value {
 
     private Symbol sym;
+    private int registerNumber;
 
     public Variable(Symbol sym) {
         this.sym = sym;
@@ -17,6 +18,14 @@ public class Variable implements Value {
 
     public String toString() {
         return sym.token().lexeme();
+    }
+
+    public int getRegisterNumber() {
+        return registerNumber;
+    }
+
+    public void setRegisterNumber(int registerNumber) {
+        this.registerNumber = registerNumber;
     }
 
     @Override
