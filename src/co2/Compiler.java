@@ -17,7 +17,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.ArrayDeque;
 import java.util.Queue;
+import java.util.Deque;
 import java.util.Set;
 import java.util.Stack;
 import java.util.StringTokenizer;
@@ -2372,6 +2374,67 @@ public class Compiler {
 
     public Map<Variable, ArrayList<Variable>> getVertexGraph() {
         Map<Variable, ArrayList<Variable>> vertices = new HashMap<>();
+        Queue<BasicBlock> queue = new ArrayDeque<>();
+        queue.add(irHead);
+    
+        Map<BasicBlock, Set<Variable>> blockLiveVariables = new HashMap<>();
+        Set<BasicBlock> visited = new HashSet<>();
+        Stack<BasicBlock> visitedStack = new Stack<>();
+    
+        //Getting the blocks in order of traversal.
+        while (!queue.isEmpty()) {
+            BasicBlock currentBlock = queue.poll();
+    
+            if (!visited.add(currentBlock)) {
+                continue;
+            }
+    
+            visitedStack.push(currentBlock);
+    
+            for (BasicBlock successor : currentBlock.getSuccessors().keySet()) {
+                queue.add(successor);
+            }
+        }
+    
+        while (!visitedStack.isEmpty()) {
+            BasicBlock currentBlock = visitedStack.pop();
+            
+            Set<Variable> localLiveVariables = blockLiveVariables.getOrDefault(currentBlock, new HashSet<>());
+    
+            for (TAC instruction : currentBlock.getInstructions().getReversedInstructions()) {
+                if (localLiveVariables.contains(instruction.getDest())) {
+                    localLiveVariables.remove(instruction.getDest());
+                }
+                localLiveVariables.addAll(getVariableReferences(instruction));
+            }
+    
+            for (BasicBlock predecessor : currentBlock.getPredecessors()) {
+                // Check if the predecessor already has a live variables set in the map
+                Set<Variable> predecessorLiveVariables = blockLiveVariables.get(predecessor);
+                
+                // If not, create a new set and put it in the map
+                if (predecessorLiveVariables == null) {
+                    predecessorLiveVariables = new HashSet<>();
+                    blockLiveVariables.put(predecessor, predecessorLiveVariables);
+                }
+                
+                predecessorLiveVariables.addAll(localLiveVariables);
+            }
+            
+    
+            for (Variable liveVariable : localLiveVariables) {
+                if (!vertices.containsKey(liveVariable)) {
+                    vertices.put(liveVariable, new ArrayList<>());
+                }
+    
+                for (Variable otherVariable : localLiveVariables) {
+                    if (!liveVariable.equals(otherVariable)) {
+                        vertices.get(liveVariable).add(otherVariable);
+                    }
+                }
+            }
+        }
+    
         return vertices;
     }
 
