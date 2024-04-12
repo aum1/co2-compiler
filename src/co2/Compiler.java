@@ -2366,9 +2366,40 @@ public class Compiler {
             }
         }
 
+        // retrieve the graph again, to get the edges to add
+        Map<Variable, ArrayList<Variable>> originalGraph = getVertexGraph();
+        
         // while stack is not empty
             // pop node from stack, insert into graph
             // mark with specific register (lowest free one)
+        while (!removedVertices.isEmpty()) {
+            Variable poppedVertex = removedVertices.pop();
+            vertices.put(poppedVertex, originalGraph.get(poppedVertex));
+
+            // check if we can color the node
+            int registerNumber = 0;
+            while (registerNumber < numRegs) {
+                // if we find a register number that does not align with all the edges
+                boolean foundRegisterValue = true;
+                for (int i = 0; i < vertices.get(poppedVertex).size(); i++) {
+                    if (vertices.get(poppedVertex).get(i).getRegisterNumber() == registerNumber) {
+                        foundRegisterValue = false;
+                    }
+                }
+
+                if (foundRegisterValue) {
+                    poppedVertex.setRegisterNumber(registerNumber);
+                }
+                else {
+                    registerNumber++;
+                }
+            }
+
+            // no allowed vertex, so must spill
+            if (registerNumber == numRegs) {
+                
+            }
+        }
         
     }
 
