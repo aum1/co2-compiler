@@ -2469,6 +2469,16 @@ public class Compiler {
         return vertices;
     }
 
+    public void printOutVariableGraph(Map<Variable, ArrayList<Variable>> graph) {
+        System.out.println("Graph: ");
+        for (Variable v : graph.keySet()) {
+            System.out.println("Vertex:" + v.getSymbol().token().lexeme() + ", Register: " + v.getRegisterNumber());
+            for (Variable vEdge : graph.get(v)) {
+                System.out.println("\t" + vEdge.getSymbol().token().lexeme() + ", Register: " + vEdge.getRegisterNumber());
+            }
+        }
+    }
+
 // Code Generation ==============================================================
     public int[] genCode() {
         return null;
