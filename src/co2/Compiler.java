@@ -1368,19 +1368,20 @@ public class Compiler {
 
     public String optimization(List<String> args, boolean isLoop, boolean isMax) {
         List<String> optimizationArgs = new ArrayList<>(args);
-        if (isMax) {
-            optimizationArgs.clear();
-            optimizationArgs.clear();
-            optimizationArgs.add("cp");
-            optimizationArgs.add("cf");
-            optimizationArgs.add("cpp");
-            optimizationArgs.add("cse");
-            optimizationArgs.add("dce");
-            isLoop = true;
-        }
-        else {
-            optimizationArgs = args;
-        }
+        // if (isMax) {
+        //     System.out.println("update to max");
+        //     optimizationArgs.clear();
+        //     optimizationArgs.clear();
+        //     optimizationArgs.add("cp");
+        //     optimizationArgs.add("cf");
+        //     optimizationArgs.add("cpp");
+        //     optimizationArgs.add("cse");
+        //     optimizationArgs.add("dce");
+        //     isLoop = true;
+        // }
+        // else {
+        //     optimizationArgs = args;
+        // }
 
         // open file writer
         FileWriter file = null;
@@ -1955,7 +1956,7 @@ public class Compiler {
             else {
                 continue;
             }
-            System.out.println("Current instruction " + instruction.getID() + " has folded constant of " + foldedConstant.getValue().token().lexeme());
+            // System.out.println("Current instruction " + instruction.getID() + " has folded constant of " + foldedConstant.getValue().token().lexeme());
             currInstructions.getInstructions().set(i, new Assign(instruction.getID(), instruction.getDest(), foldedConstant));
 
             try {
@@ -2330,6 +2331,7 @@ public class Compiler {
         // map from edge and adjacent list to other variables
         Map<Variable, ArrayList<Variable>> vertices = getVertexGraph();
         Stack<Variable> removedVertices = new Stack<Variable>();
+        // printOutVariableGraph(vertices);
         
         // while graph is not empty
             // pop out node with < numRegs edges
@@ -2338,7 +2340,8 @@ public class Compiler {
             // push node to stack
         while (vertices.keySet().size() > 0) {
             boolean wasVertexFound = false;
-            for (Variable currVertex : vertices.keySet()) {
+            for (int i = 0; i < vertices.size(); i++) {
+                Variable currVertex = (Variable) vertices.keySet().toArray()[i];
                 // found vertex 
                 if (vertices.get(currVertex).size() < numRegs) {
                     // remove vertex edges
@@ -2366,6 +2369,7 @@ public class Compiler {
             }
         }
 
+        System.out.println("Done with initial removals");
         // retrieve the graph again, to get the edges to add
         Map<Variable, ArrayList<Variable>> originalGraph = getVertexGraph();
         
@@ -2374,6 +2378,7 @@ public class Compiler {
             // mark with specific register (lowest free one)
         while (!removedVertices.isEmpty()) {
             Variable poppedVertex = removedVertices.pop();
+            // System.out.println("Popping " + poppedVertex.getSymbol().token().lexeme());
             vertices.put(poppedVertex, originalGraph.get(poppedVertex));
 
             // check if we can color the node
@@ -2381,14 +2386,20 @@ public class Compiler {
             while (registerNumber < numRegs) {
                 // if we find a register number that does not align with all the edges
                 boolean foundRegisterValue = true;
-                for (int i = 0; i < vertices.get(poppedVertex).size(); i++) {
-                    if (vertices.get(poppedVertex).get(i).getRegisterNumber() == registerNumber) {
-                        foundRegisterValue = false;
+                if (vertices.get(poppedVertex) != null) {
+                    for (int i = 0; i < vertices.get(poppedVertex).size(); i++) {
+                        if (vertices.get(poppedVertex).get(i).getRegisterNumber() == registerNumber) {
+                            foundRegisterValue = false;
+                        }
                     }
+                }
+                else {
+                    System.out.println("Register " + poppedVertex + " is empty list");
                 }
 
                 if (foundRegisterValue) {
                     poppedVertex.setRegisterNumber(registerNumber);
+                    break;
                 }
                 else {
                     registerNumber++;
@@ -2400,7 +2411,8 @@ public class Compiler {
                 
             }
         }
-        
+        System.out.println("Done with stack");
+        printOutVariableGraph(vertices);
     }
 
     public Map<Variable, ArrayList<Variable>> getVertexGraph() {
@@ -2473,10 +2485,13 @@ public class Compiler {
         System.out.println("Graph: ");
         for (Variable v : graph.keySet()) {
             System.out.println("Vertex:" + v.getSymbol().token().lexeme() + ", Register: " + v.getRegisterNumber());
-            for (Variable vEdge : graph.get(v)) {
-                System.out.println("\t" + vEdge.getSymbol().token().lexeme() + ", Register: " + vEdge.getRegisterNumber());
+            if (graph.get(v) != null) {
+                for (Variable vEdge : graph.get(v)) {
+                    System.out.println("\t> " + vEdge.getSymbol().token().lexeme());
+                }
             }
         }
+        System.out.println("Graph end");
     }
 
 // Code Generation ==============================================================
