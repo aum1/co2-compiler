@@ -2446,9 +2446,28 @@ public class Compiler {
     
             for (TAC instruction : currentBlock.getInstructions().getReversedInstructions()) {
                 if (localLiveVariables.contains(instruction.getDest())) {
+                    // TODO: when removing variables, still add edge from variable to other variables in the live variables
+                    if (!vertices.containsKey(instruction.getDest())) {
+                        vertices.put(instruction.getDest(), new ArrayList<>());
+                    }
+        
+                    for (Variable otherVariable : localLiveVariables) {
+                        if (!instruction.getDest().equals(otherVariable)) {
+                            if (!vertices.get(instruction.getDest()).contains(otherVariable)) {
+                                vertices.get(instruction.getDest()).add(otherVariable);
+                            }
+                        }
+                    }
+
                     localLiveVariables.remove(instruction.getDest());
                 }
                 localLiveVariables.addAll(getVariableReferences(instruction));
+            }
+            currentBlock.getInstructions().getReversedInstructions();
+
+            System.out.println("For the block " + currentBlock.getID());
+            for (Variable v : localLiveVariables) {
+                System.out.println("\t" + v.getSymbol().token().lexeme() + " " + v.getClass());
             }
     
             for (BasicBlock predecessor : currentBlock.getPredecessors()) {
@@ -2472,7 +2491,9 @@ public class Compiler {
     
                 for (Variable otherVariable : localLiveVariables) {
                     if (!liveVariable.equals(otherVariable)) {
-                        vertices.get(liveVariable).add(otherVariable);
+                        if (!vertices.get(liveVariable).contains(otherVariable)) {
+                            vertices.get(liveVariable).add(otherVariable);
+                        }
                     }
                 }
             }
