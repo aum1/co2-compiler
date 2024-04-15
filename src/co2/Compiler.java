@@ -2331,89 +2331,88 @@ public class Compiler {
         // map from edge and adjacent list to other variables
         Map<String, Set<String>> vertices = getVertexGraph();
         printOutVariableGraph(vertices);
-        // Stack<Variable> removedVertices = new Stack<Variable>();
-        // // printOutVariableGraph(vertices);
+        Stack<String> removedVertices = new Stack<String>();
         
-        // // while graph is not empty
-        //     // pop out node with < numRegs edges
-        //     // if no edge has < numRegs, then pop any node and mark as maybeSpilled
-        //     // remove edges of the node
-        //     // push node to stack
-        // while (vertices.keySet().size() > 0) {
-        //     boolean wasVertexFound = false;
-        //     for (int i = 0; i < vertices.size(); i++) {
-        //         Variable currVertex = (Variable) vertices.keySet().toArray()[i];
-        //         // found vertex 
-        //         if (vertices.get(currVertex).size() < numRegs) {
-        //             // remove vertex edges
-        //             for (Variable otherVertex : vertices.keySet()) {
-        //                 vertices.get(otherVertex).remove(currVertex);
-        //             }
+        // while graph is not empty
+            // pop out node with < numRegs edges
+            // if no edge has < numRegs, then pop any node and mark as maybeSpilled
+            // remove edges of the node
+            // push node to stack
+        while (vertices.keySet().size() > 0) {
+            boolean wasVertexFound = false;
+            for (int i = 0; i < vertices.size(); i++) {
+                String currVertex = (String) vertices.keySet().toArray()[i];
+                // found vertex 
+                if (vertices.get(currVertex).size() < numRegs) {
+                    // remove vertex edges
+                    for (String otherVertex : vertices.keySet()) {
+                        vertices.get(otherVertex).remove(currVertex);
+                    }
                     
-        //             // add to stack
-        //             removedVertices.add(currVertex);
-        //             vertices.remove(currVertex);
-        //             wasVertexFound = true;
-        //         }
-        //     }
+                    // add to stack
+                    removedVertices.add(currVertex);
+                    vertices.remove(currVertex);
+                    wasVertexFound = true;
+                }
+            }
 
-        //     // didn't find a vertex, pop any mode and mark as maybeSpilled
-        //     if (!wasVertexFound) {
-        //         Variable vertexToRemove = (Variable) vertices.keySet().toArray()[0];
-        //         for (Variable otherVertex : vertices.keySet()) {
-        //             vertices.get(otherVertex).remove(vertexToRemove);
-        //         }
+            // didn't find a vertex, pop any mode and mark as maybeSpilled
+            if (!wasVertexFound) {
+                String vertexToRemove = (String) vertices.keySet().toArray()[0];
+                for (String otherVertex : vertices.keySet()) {
+                    vertices.get(otherVertex).remove(vertexToRemove);
+                }
 
-        //         removedVertices.add(vertexToRemove);
-        //         vertices.remove(vertexToRemove);
-        //         // TODO: mark as possible spillages
-        //     }
-        // }
+                removedVertices.add(vertexToRemove);
+                vertices.remove(vertexToRemove);
+                // TODO: mark as possible spillages
+            }
+        }
+        System.out.println("Done with initial removals");
 
-        // System.out.println("Done with initial removals");
-        // // retrieve the graph again, to get the edges to add
-        // Map<Variable, ArrayList<Variable>> originalGraph = getVertexGraph();
-        
-        // // while stack is not empty
-        //     // pop node from stack, insert into graph
-        //     // mark with specific register (lowest free one)
-        // while (!removedVertices.isEmpty()) {
-        //     Variable poppedVertex = removedVertices.pop();
-        //     // System.out.println("Popping " + poppedVertex.getSymbol().token().lexeme());
-        //     vertices.put(poppedVertex, originalGraph.get(poppedVertex));
+        // retrieve the graph again, to get the edges to add
+        Map<String, Set<String>> originalGraph = getVertexGraph();
 
-        //     // check if we can color the node
-        //     int registerNumber = 0;
-        //     while (registerNumber < numRegs) {
-        //         // if we find a register number that does not align with all the edges
-        //         boolean foundRegisterValue = true;
-        //         if (vertices.get(poppedVertex) != null) {
-        //             for (int i = 0; i < vertices.get(poppedVertex).size(); i++) {
-        //                 if (vertices.get(poppedVertex).get(i).getRegisterNumber() == registerNumber) {
-        //                     foundRegisterValue = false;
-        //                 }
-        //             }
-        //         }
-        //         else {
-        //             System.out.println("Register " + poppedVertex + " is empty list");
-        //         }
+        // initialize register map
+        Map<String, Integer> variableRegisterMap = new HashMap<>();
+        for (String vertex : originalGraph.keySet()) {
+            variableRegisterMap.put(vertex, -1);
+        }
 
-        //         if (foundRegisterValue) {
-        //             poppedVertex.setRegisterNumber(registerNumber);
-        //             break;
-        //         }
-        //         else {
-        //             registerNumber++;
-        //         }
-        //     }
+        // while stack is not empty
+            // pop node from stack, insert into graph
+            // mark with specific register (lowest free one)
+        while (!removedVertices.isEmpty()) {
+            String poppedVertex = removedVertices.pop();
 
-        //     // no allowed vertex, so must spill
-        //     if (registerNumber == numRegs) {
+            // check if we can color the node
+            int registerNumber = 0;
+            while (registerNumber < numRegs) {
+                // if we find a register number that does not align with all the edges
+                boolean foundRegisterValue = true;
+                for (int i = 0; i < originalGraph.get(poppedVertex).size(); i++) {
+                    System.out.println("comparing " + registerNumber + ": " + poppedVertex + " to " + (String) originalGraph.get(poppedVertex).toArray()[i]);
+                    if (variableRegisterMap.get((String) originalGraph.get(poppedVertex).toArray()[i]) == registerNumber) {
+                        foundRegisterValue = false;
+                    }
+                }
+
+                if (foundRegisterValue) {
+                    variableRegisterMap.put(poppedVertex, registerNumber);
+                    System.out.println("Assigned " + poppedVertex + "->" +  registerNumber);
+                    break;
+                }
+                else {
+                    registerNumber++;
+                }
+            }
+
+            // no allowed vertex, so must spill
+            if (registerNumber == numRegs) {
                 
-        //     }
-        // }
-        // System.out.println("Done with stack");
-        // printOutVariableGraph(vertices);
+            }
+        }
+        printOutVariableRegisters(variableRegisterMap);
     }
 
     public Map<String, Set<String>> getVertexGraph() {
@@ -2510,6 +2509,13 @@ public class Compiler {
         }
         System.out.println("Graph end");
     }
+
+    public void printOutVariableRegisters(Map<String, Integer> registerMap) {
+        System.out.println("Registers: ");
+        for (String var : registerMap.keySet()) {
+            System.out.println(var + ": " + registerMap.get(var));
+        }
+    }   
 
 // Code Generation ==============================================================
     public int[] genCode() {
