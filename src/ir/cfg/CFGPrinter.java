@@ -179,6 +179,12 @@ public class CFGPrinter implements CFGVisitor {
     }
 
     @Override
+    public String visit(Pow node) {
+        String toReturn = node.getDest().getSymbol().token().lexeme() + " = " + node.getLeft() + " ^ " + node.getRight();
+        return toReturn;
+    }
+
+    @Override
     public String visit(And node) {
         String toReturn = node.getDest().getSymbol().token().lexeme() + " = " + node.getLeft() + " && " + node.getRight();
         return toReturn;

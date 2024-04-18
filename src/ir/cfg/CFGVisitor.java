@@ -21,6 +21,7 @@ import ir.tac.Div;
 import ir.tac.Mod;
 import ir.tac.Mul;
 import ir.tac.Or;
+import ir.tac.Pow;
 import ir.tac.Return;
 
 
@@ -32,6 +33,7 @@ public interface CFGVisitor {
     public String visit (Mul node);
     public String visit (Div node);
     public String visit (Mod node);
+    public String visit (Pow node);
 
     public String visit (And node);
     public String visit (Or node);
