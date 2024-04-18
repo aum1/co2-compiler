@@ -2413,6 +2413,49 @@ public class Compiler {
             }
         }
         printOutVariableRegisters(variableRegisterMap);
+        assignRegistersToVariables(irHead, variableRegisterMap);
+    }
+
+    public void assignRegistersToVariables(BasicBlock irHead, Map<String, Integer> variableRegisterMap) {
+        Queue<BasicBlock> queue = new ArrayDeque<>();
+        Set<BasicBlock> visited = new HashSet<>();
+        queue.add(irHead);
+    
+        // Traverse the IR blocks similarly to the BFS in getVertexGraph
+        while (!queue.isEmpty()) {
+            BasicBlock currentBlock = queue.poll();
+    
+            if (!visited.add(currentBlock)) {
+                continue; // Skip if already visited
+            }
+    
+            // Iterate over each instruction in the current block
+            for (TAC instruction : currentBlock.getInstructions()) {
+                // Check each source and destination variable in the instruction
+                checkAndAssignRegister(instruction.getDest(), variableRegisterMap);
+                for (Variable var : getVariableReferences(instruction)) {
+                    checkAndAssignRegister(var, variableRegisterMap);
+                }
+            }
+    
+            // Add successors to the queue
+            for (BasicBlock successor : currentBlock.getSuccessors().keySet()) {
+                queue.add(successor);
+            }
+        }
+    }
+    
+    private void checkAndAssignRegister(Variable variable, Map<String, Integer> variableRegisterMap) {
+        if (variable == null) {
+            return;
+        }
+        String lexeme = variable.getSymbol().token().lexeme();
+        // Check if the variable's lexeme is in the map and assign the register number
+        if (variableRegisterMap.containsKey(lexeme)) {
+            int registerNumber = variableRegisterMap.get(lexeme);
+            variable.setRegisterNumber(registerNumber);
+            System.out.println("Assigned register " + registerNumber + " to variable " + lexeme);
+        }
     }
 
     public Map<String, Set<String>> getVertexGraph() {
