@@ -72,6 +72,7 @@ import ir.tac.BLT;
 import ir.tac.BNE;
 import ir.tac.BRA;
 import ir.tac.Call;
+import ir.tac.Comparison;
 import ir.tac.Div;
 import ir.tac.End;
 import ir.tac.Literal;
@@ -2562,9 +2563,166 @@ public class Compiler {
 
 // Code Generation ==============================================================
     public int[] genCode() {
-        return null;
+        ArrayList<Integer> generatedCode = new ArrayList<>();
+
+        // start with computation block and traverse
+        for (TAC currentInstruction : this.irHead.getInstructions()) {
+            int instructionMachineCode = instructionToMachineCode(currentInstruction);
+            generatedCode.add(instructionMachineCode);
+        }
+
+
+        // convert array list to array and return
+        int[] generatedCodeArray = new int[generatedCode.size()];
+        for (int i = 0; i < generatedCode.size(); i++) {
+            generatedCodeArray[i] = generatedCode.get(i);
+        }
+        return generatedCodeArray;
     }
 
+    public int instructionToMachineCode(TAC instruction) {
+        // use assemble in DLX
+        return 0;
+    }
+
+    public int instructionToMachineCode(Add instruction) {
+        boolean isFloatOperation = instruction.getLeft().getSymbol().token().kind() == Kind.FLOAT_VAL || instruction.getRight().getSymbol().token().kind() == Kind.FLOAT_VAL;
+        int opCode, a, b, c;
+        a = instruction.getDest().getRegisterNumber();
+        opCode = 0;
+        b = 0;
+        c = 0;
+
+        if ((instruction.getLeft() instanceof Variable) && (instruction.getRight() instanceof Variable)) {
+            Variable leftVariable = (Variable) instruction.getLeft();
+            Variable rightVariable = (Variable) instruction.getRight();
+            b = leftVariable.getRegisterNumber();
+            c = rightVariable.getRegisterNumber();
+            
+            // fADD
+            if (isFloatOperation) {
+                opCode = 7;
+            }
+            // ADD
+            else {
+                opCode = 0;
+            }
+        }
+        else if (instruction.getLeft() instanceof Literal && instruction.getRight() instanceof Variable) {
+            Literal leftVariable = (Literal) instruction.getLeft();
+            Variable rightVariable = (Variable) instruction.getRight();
+            b = Integer.valueOf(leftVariable.getValue().token().lexeme());
+            c = rightVariable.getRegisterNumber();
+            // ADDI
+            opCode = 20;
+
+            // add float check here fADDI
+        }
+
+        return DLX.assemble(opCode, a, b, c);
+    }
+
+    public int instructionToMachineCode (Sub node) {
+        // SUB
+        // fSUB
+        // SUBI
+        // fSUBI
+        return 0;
+    }
+
+    public int instructionToMachineCode (Mul node) {
+        // MUL
+        // fMUL
+        // MULI
+        // fMULI
+        return 0;
+    }
+
+    public int instructionToMachineCode (Div node) {
+        // DIV
+        // fDIV
+        // DIVI
+        // fDIVI
+        return 0;
+    }
+
+    public int instructionToMachineCode (Mod node) {
+        // MOD
+        // fMOD
+        // MODI
+        // fMODI
+        return 0;
+    }
+
+    public int instructionToMachineCode (Pow node) {
+        // POW
+        // POWI
+        return 0;
+    }
+
+    public int instructionToMachineCode (And node) {
+        // AND
+        // ANDI
+        // MODI
+        // fMODI
+        return 0;
+    }
+
+    public int instructionToMachineCode (Or node) {
+        // OR
+        // ORI
+        // MODI
+        // fMODI
+        return 0;
+    }
+
+    public int instructionToMachineCode (BEQ node) {
+        return 0;
+    }
+
+    public int instructionToMachineCode (BGE node) {
+        return 0;
+    }
+
+    public int instructionToMachineCode (BGT node) {
+        return 0;
+    }
+
+    public int instructionToMachineCode (BLE node) {
+        return 0;
+    }
+
+    public int instructionToMachineCode (BLT node) {
+        return 0;
+    }
+
+    public int instructionToMachineCode (BNE node) {
+        return 0;
+    }
+
+    public int instructionToMachineCode (BRA node) {
+        return 0;
+    }
+
+    public int instructionToMachineCode (Comparison node) {
+        return 0;
+    }
+    
+    public int instructionToMachineCode (Assign node) {
+        return 0;
+    }
+
+    public int instructionToMachineCode (Call node) {
+        return 0;
+    }
+    
+    public int instructionToMachineCode (Literal node) {
+        return 0;
+    }
+
+    public int instructionToMachineCode (Return node) {
+        return 0;
+    }
 }
 
 
