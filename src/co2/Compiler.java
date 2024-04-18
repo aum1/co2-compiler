@@ -2329,9 +2329,9 @@ public class Compiler {
         // Create graph and edges based on live variable anaysis
 
         // map from edge and adjacent list to other variables
-        Map<Variable, ArrayList<Variable>> vertices = getVertexGraph();
-        Stack<Variable> removedVertices = new Stack<Variable>();
-        // printOutVariableGraph(vertices);
+        Map<String, Set<String>> vertices = getVertexGraph();
+        printOutVariableGraph(vertices);
+        Stack<String> removedVertices = new Stack<String>();
         
         // while graph is not empty
             // pop out node with < numRegs edges
@@ -2341,11 +2341,11 @@ public class Compiler {
         while (vertices.keySet().size() > 0) {
             boolean wasVertexFound = false;
             for (int i = 0; i < vertices.size(); i++) {
-                Variable currVertex = (Variable) vertices.keySet().toArray()[i];
+                String currVertex = (String) vertices.keySet().toArray()[i];
                 // found vertex 
                 if (vertices.get(currVertex).size() < numRegs) {
                     // remove vertex edges
-                    for (Variable otherVertex : vertices.keySet()) {
+                    for (String otherVertex : vertices.keySet()) {
                         vertices.get(otherVertex).remove(currVertex);
                     }
                     
@@ -2358,8 +2358,8 @@ public class Compiler {
 
             // didn't find a vertex, pop any mode and mark as maybeSpilled
             if (!wasVertexFound) {
-                Variable vertexToRemove = (Variable) vertices.keySet().toArray()[0];
-                for (Variable otherVertex : vertices.keySet()) {
+                String vertexToRemove = (String) vertices.keySet().toArray()[0];
+                for (String otherVertex : vertices.keySet()) {
                     vertices.get(otherVertex).remove(vertexToRemove);
                 }
 
@@ -2368,37 +2368,38 @@ public class Compiler {
                 // TODO: mark as possible spillages
             }
         }
-
         System.out.println("Done with initial removals");
+
         // retrieve the graph again, to get the edges to add
-        Map<Variable, ArrayList<Variable>> originalGraph = getVertexGraph();
-        
+        Map<String, Set<String>> originalGraph = getVertexGraph();
+
+        // initialize register map
+        Map<String, Integer> variableRegisterMap = new HashMap<>();
+        for (String vertex : originalGraph.keySet()) {
+            variableRegisterMap.put(vertex, -1);
+        }
+
         // while stack is not empty
             // pop node from stack, insert into graph
             // mark with specific register (lowest free one)
         while (!removedVertices.isEmpty()) {
-            Variable poppedVertex = removedVertices.pop();
-            // System.out.println("Popping " + poppedVertex.getSymbol().token().lexeme());
-            vertices.put(poppedVertex, originalGraph.get(poppedVertex));
+            String poppedVertex = removedVertices.pop();
 
             // check if we can color the node
             int registerNumber = 0;
             while (registerNumber < numRegs) {
                 // if we find a register number that does not align with all the edges
                 boolean foundRegisterValue = true;
-                if (vertices.get(poppedVertex) != null) {
-                    for (int i = 0; i < vertices.get(poppedVertex).size(); i++) {
-                        if (vertices.get(poppedVertex).get(i).getRegisterNumber() == registerNumber) {
-                            foundRegisterValue = false;
-                        }
+                for (int i = 0; i < originalGraph.get(poppedVertex).size(); i++) {
+                    System.out.println("comparing " + registerNumber + ": " + poppedVertex + " to " + (String) originalGraph.get(poppedVertex).toArray()[i]);
+                    if (variableRegisterMap.get((String) originalGraph.get(poppedVertex).toArray()[i]) == registerNumber) {
+                        foundRegisterValue = false;
                     }
-                }
-                else {
-                    System.out.println("Register " + poppedVertex + " is empty list");
                 }
 
                 if (foundRegisterValue) {
-                    poppedVertex.setRegisterNumber(registerNumber);
+                    variableRegisterMap.put(poppedVertex, registerNumber);
+                    System.out.println("Assigned " + poppedVertex + "->" +  registerNumber);
                     break;
                 }
                 else {
@@ -2411,12 +2412,11 @@ public class Compiler {
                 
             }
         }
-        System.out.println("Done with stack");
-        printOutVariableGraph(vertices);
+        printOutVariableRegisters(variableRegisterMap);
     }
 
-    public Map<Variable, ArrayList<Variable>> getVertexGraph() {
-        Map<Variable, ArrayList<Variable>> vertices = new HashMap<>();
+    public Map<String, Set<String>> getVertexGraph() {
+        Map<String, Set<String>> vertices = new HashMap<>();
         Queue<BasicBlock> queue = new ArrayDeque<>();
         queue.add(irHead);
     
@@ -2447,14 +2447,14 @@ public class Compiler {
             for (TAC instruction : currentBlock.getInstructions().getReversedInstructions()) {
                 if (localLiveVariables.contains(instruction.getDest())) {
                     // TODO: when removing variables, still add edge from variable to other variables in the live variables
-                    if (!vertices.containsKey(instruction.getDest())) {
-                        vertices.put(instruction.getDest(), new ArrayList<>());
+                    if (!vertices.containsKey(instruction.getDest().getSymbol().token().lexeme())) {
+                        vertices.put(instruction.getDest().getSymbol().token().lexeme(), new HashSet<>());
                     }
         
                     for (Variable otherVariable : localLiveVariables) {
                         if (!instruction.getDest().equals(otherVariable)) {
-                            if (!vertices.get(instruction.getDest()).contains(otherVariable)) {
-                                vertices.get(instruction.getDest()).add(otherVariable);
+                            if (!vertices.get(instruction.getDest().getSymbol().token().lexeme()).contains(otherVariable.getSymbol().token().lexeme())) {
+                                vertices.get(instruction.getDest().getSymbol().token().lexeme()).add(otherVariable.getSymbol().token().lexeme());
                             }
                         }
                     }
@@ -2464,11 +2464,6 @@ public class Compiler {
                 localLiveVariables.addAll(getVariableReferences(instruction));
             }
             currentBlock.getInstructions().getReversedInstructions();
-
-            System.out.println("For the block " + currentBlock.getID());
-            for (Variable v : localLiveVariables) {
-                System.out.println("\t" + v.getSymbol().token().lexeme() + " " + v.getClass());
-            }
     
             for (BasicBlock predecessor : currentBlock.getPredecessors()) {
                 // Check if the predecessor already has a live variables set in the map
@@ -2485,14 +2480,14 @@ public class Compiler {
             
     
             for (Variable liveVariable : localLiveVariables) {
-                if (!vertices.containsKey(liveVariable)) {
-                    vertices.put(liveVariable, new ArrayList<>());
+                if (!vertices.containsKey(liveVariable.getSymbol().token().lexeme())) {
+                    vertices.put(liveVariable.getSymbol().token().lexeme(), new HashSet<>());
                 }
     
                 for (Variable otherVariable : localLiveVariables) {
                     if (!liveVariable.equals(otherVariable)) {
-                        if (!vertices.get(liveVariable).contains(otherVariable)) {
-                            vertices.get(liveVariable).add(otherVariable);
+                        if (!vertices.get(liveVariable.getSymbol().token().lexeme()).contains(otherVariable.getSymbol().token().lexeme())) {
+                            vertices.get(liveVariable.getSymbol().token().lexeme()).add(otherVariable.getSymbol().token().lexeme());
                         }
                     }
                 }
@@ -2502,18 +2497,25 @@ public class Compiler {
         return vertices;
     }
 
-    public void printOutVariableGraph(Map<Variable, ArrayList<Variable>> graph) {
+    public void printOutVariableGraph(Map<String, Set<String>> graph) {
         System.out.println("Graph: ");
-        for (Variable v : graph.keySet()) {
-            System.out.println("Vertex:" + v.getSymbol().token().lexeme() + ", Register: " + v.getRegisterNumber());
+        for (String v : graph.keySet()) {
+            System.out.println("Vertex:" + v);
             if (graph.get(v) != null) {
-                for (Variable vEdge : graph.get(v)) {
-                    System.out.println("\t> " + vEdge.getSymbol().token().lexeme());
+                for (String vEdge : graph.get(v)) {
+                    System.out.println("\t> " + vEdge);
                 }
             }
         }
         System.out.println("Graph end");
     }
+
+    public void printOutVariableRegisters(Map<String, Integer> registerMap) {
+        System.out.println("Registers: ");
+        for (String var : registerMap.keySet()) {
+            System.out.println(var + ": " + registerMap.get(var));
+        }
+    }   
 
 // Code Generation ==============================================================
     public int[] genCode() {
