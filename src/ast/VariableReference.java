@@ -7,6 +7,9 @@ public class VariableReference extends Node implements Expression {
     private Symbol ident;
     private List<Expression> dimensions;
     private boolean hasDimensions;
+    private boolean isInt;
+    private boolean isFloat;
+    private boolean isBool;
 
     public VariableReference(int lineNum, int charPos, Symbol ident) {
         super(lineNum, charPos);
@@ -30,6 +33,27 @@ public class VariableReference extends Node implements Expression {
         visitor.visit(this);
     }
     
+    public void setIsInt(boolean isInt) {
+        this.isInt = isInt;
+    }
+
+    public void setIsFloat(boolean isInt) {
+        this.isFloat = isInt;
+    }
     
-    
+    public void setIsBool(boolean isInt) {
+        this.isBool = isInt;
+    }
+
+    public boolean isInt() {
+        return isInt;
+    }
+
+    public boolean isBool() {
+        return isBool;
+    }
+
+    public boolean isFloat() {
+        return isFloat;
+    }
 }

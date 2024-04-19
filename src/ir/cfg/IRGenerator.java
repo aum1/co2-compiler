@@ -123,13 +123,13 @@ public class IRGenerator {
                         visit(node.getArgumentList().getExpressionParameters().get(0));
                     }
                 }
-                currentInstructionList.addInstruction(new Call(BasicBlock.getNextBlockNumber(), node.getFunctionName(), node.getArgumentList()));
+                currentInstructionList.addInstruction(new Call(TACList.getNextTACNumber(), node.getFunctionName(), node.getArgumentList()));
                 return;
             }
 
         BasicBlock functionBlock = functionBlocks.get(node.getFunctionName().token().lexeme());
         
-        currentInstructionList.addInstruction(new Call(BasicBlock.getNextBlockNumber(), functionBlock, node.getFunctionName(), node.getArgumentList()));
+        currentInstructionList.addInstruction(new Call(TACList.getNextTACNumber(), functionBlock, node.getFunctionName(), node.getArgumentList()));
         previousBlock.addSuccessor(functionBlock);
     }
 
@@ -305,6 +305,10 @@ public class IRGenerator {
         Variable leftLatest = currentInstructionList.getLatestVariable();
         visit(node.getRightSide());
         Variable rightLatest = currentInstructionList.getLatestVariable();
+
+        dest.setIsBool(leftLatest.isBool());
+        dest.setIsFloat(leftLatest.isFloat());
+        dest.setIsInt(leftLatest.isInt());
         
         currentInstructionList.addInstruction(new Add(TACList.getNextTACNumber(), dest, leftLatest, rightLatest));
         currentInstructionList.setLatestVariable(dest);
@@ -317,6 +321,10 @@ public class IRGenerator {
         visit(node.getRightSide());
         Variable rightLatest = currentInstructionList.getLatestVariable();
 
+        dest.setIsBool(leftLatest.isBool());
+        dest.setIsFloat(leftLatest.isFloat());
+        dest.setIsInt(leftLatest.isInt());
+
         currentInstructionList.addInstruction(new Sub(TACList.getNextTACNumber(), dest, leftLatest, rightLatest));
         currentInstructionList.setLatestVariable(dest);
     }
@@ -328,6 +336,10 @@ public class IRGenerator {
         visit(node.getRightSide());
         Variable rightLatest = currentInstructionList.getLatestVariable();
 
+        dest.setIsBool(leftLatest.isBool());
+        dest.setIsFloat(leftLatest.isFloat());
+        dest.setIsInt(leftLatest.isInt());
+
         currentInstructionList.addInstruction(new Mul(TACList.getNextTACNumber(), dest, leftLatest, rightLatest));
         currentInstructionList.setLatestVariable(dest);
     }
@@ -338,6 +350,10 @@ public class IRGenerator {
         Variable leftLatest = currentInstructionList.getLatestVariable();
         visit(node.getRightSide());
         Variable rightLatest = currentInstructionList.getLatestVariable();
+
+        dest.setIsBool(leftLatest.isBool());
+        dest.setIsFloat(leftLatest.isFloat());
+        dest.setIsInt(leftLatest.isInt());
         
         currentInstructionList.addInstruction(new Div(TACList.getNextTACNumber(), dest, leftLatest, rightLatest));
         currentInstructionList.setLatestVariable(dest);
@@ -349,6 +365,10 @@ public class IRGenerator {
         Variable leftLatest = currentInstructionList.getLatestVariable();
         visit(node.getRightSide());
         Variable rightLatest = currentInstructionList.getLatestVariable();
+
+        dest.setIsBool(leftLatest.isBool());
+        dest.setIsFloat(leftLatest.isFloat());
+        dest.setIsInt(leftLatest.isInt());
         
         currentInstructionList.addInstruction(new Mod(TACList.getNextTACNumber(), dest, leftLatest, rightLatest));
         currentInstructionList.setLatestVariable(dest);
@@ -360,6 +380,10 @@ public class IRGenerator {
         Variable leftLatest = currentInstructionList.getLatestVariable();
         visit(node.getRightSide());
         Variable rightLatest = currentInstructionList.getLatestVariable();
+
+        dest.setIsBool(leftLatest.isBool());
+        dest.setIsFloat(leftLatest.isFloat());
+        dest.setIsInt(leftLatest.isInt());
         
         currentInstructionList.addInstruction(new Pow(TACList.getNextTACNumber(), dest, leftLatest, rightLatest));
         currentInstructionList.setLatestVariable(dest);
@@ -369,6 +393,10 @@ public class IRGenerator {
         Variable destination = new Variable(new Symbol(new Token("t" + BasicBlock.getNextTempNumber(), node.charPosition(), node.lineNumber())));
         Value rightValue = new Literal(node.getInteger());
 
+        destination.setIsBool(false);
+        destination.setIsFloat(false);
+        destination.setIsInt(true);
+
         currentInstructionList.addInstruction(new Assign(TACList.getNextTACNumber(), destination, rightValue));
         currentInstructionList.setLatestVariable(destination);
     }
@@ -376,6 +404,10 @@ public class IRGenerator {
     public void visit(FloatLiteral node) {
         Variable destination = new Variable(new Symbol(new Token("t" + BasicBlock.getNextTempNumber(), node.charPosition(), node.lineNumber())));
         Value rightValue = new Literal(node.getFloat());
+
+        destination.setIsBool(false);
+        destination.setIsFloat(true);
+        destination.setIsInt(false);
 
         currentInstructionList.addInstruction(new Assign(TACList.getNextTACNumber(), destination, rightValue));
         currentInstructionList.setLatestVariable(destination);
@@ -385,6 +417,10 @@ public class IRGenerator {
         // System.out.println("here");
         Variable destination = new Variable(new Symbol(new Token("t" + BasicBlock.getNextTempNumber(), node.charPosition(), node.lineNumber())));
         Value rightValue = new Literal(node.getBoolean());
+
+        destination.setIsBool(true);
+        destination.setIsFloat(false);
+        destination.setIsInt(false);
 
         currentInstructionList.addInstruction(new Assign(TACList.getNextTACNumber(), destination, rightValue));
         currentInstructionList.setLatestVariable(destination);
@@ -396,6 +432,10 @@ public class IRGenerator {
         Variable leftLatest = currentInstructionList.getLatestVariable();
         visit(node.getRightSide());
         Variable rightLatest = currentInstructionList.getLatestVariable();
+
+        dest.setIsBool(leftLatest.isBool());
+        dest.setIsFloat(leftLatest.isFloat());
+        dest.setIsInt(leftLatest.isInt());
         
         currentInstructionList.addInstruction(new And(TACList.getNextTACNumber(), dest, leftLatest, rightLatest));
         currentInstructionList.setLatestVariable(dest);
@@ -407,6 +447,10 @@ public class IRGenerator {
         Variable leftLatest = currentInstructionList.getLatestVariable();
         visit(node.getRightSide());
         Variable rightLatest = currentInstructionList.getLatestVariable();
+
+        dest.setIsBool(leftLatest.isBool());
+        dest.setIsFloat(leftLatest.isFloat());
+        dest.setIsInt(leftLatest.isInt());
         
         currentInstructionList.addInstruction(new Or(TACList.getNextTACNumber(), dest, leftLatest, rightLatest));
         currentInstructionList.setLatestVariable(dest);
@@ -419,6 +463,10 @@ public class IRGenerator {
         visit(node.getRightSide());
         Variable rightLatest = currentInstructionList.getLatestVariable();
         
+        dest.setIsBool(leftLatest.isBool());
+        dest.setIsFloat(leftLatest.isFloat());
+        dest.setIsInt(leftLatest.isInt());
+        
         currentInstructionList.addInstruction(new Comparison(TACList.getNextTACNumber(), dest, leftLatest, rightLatest, node.getRelation()));
         currentInstructionList.setLatestVariable(dest);
     }
@@ -426,6 +474,9 @@ public class IRGenerator {
     public void visit(VariableReference node) {
         // Variable destination = new Variable(new Symbol(new Token("t" + BasicBlock.getNextTempNumber(), node.charPosition(), node.lineNumber())));
         Variable rightValue = new Variable(new Symbol(node.getIdent().token()));
+        rightValue.setIsBool(node.isBool());
+        rightValue.setIsFloat(node.isFloat());
+        rightValue.setIsInt(node.isInt());
 
         // Assign assignmentTAC = new Assign(TACList.getNextTACNumber(), destination, rightValue);
         // currentInstructionList.addInstruction(assignmentTAC);

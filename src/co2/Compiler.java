@@ -2588,36 +2588,11 @@ public class Compiler {
     public int instructionToMachineCode(Add instruction) {
         boolean isFloatOperation = instruction.getLeft().getSymbol().token().kind() == Kind.FLOAT_VAL || instruction.getRight().getSymbol().token().kind() == Kind.FLOAT_VAL;
         int opCode, a, b, c;
-        a = instruction.getDest().getRegisterNumber();
-        opCode = 0;
-        b = 0;
-        c = 0;
+        a = instruction.getDest().getMachineCodeRepresentation();
+        b = instruction.getLeft().getMachineCodeRepresentation();
+        c = instruction.getRight().getMachineCodeRepresentation();
 
-        if ((instruction.getLeft() instanceof Variable) && (instruction.getRight() instanceof Variable)) {
-            Variable leftVariable = (Variable) instruction.getLeft();
-            Variable rightVariable = (Variable) instruction.getRight();
-            b = leftVariable.getRegisterNumber();
-            c = rightVariable.getRegisterNumber();
-            
-            // fADD
-            if (isFloatOperation) {
-                opCode = 7;
-            }
-            // ADD
-            else {
-                opCode = 0;
-            }
-        }
-        else if (instruction.getLeft() instanceof Literal && instruction.getRight() instanceof Variable) {
-            Literal leftVariable = (Literal) instruction.getLeft();
-            Variable rightVariable = (Variable) instruction.getRight();
-            b = Integer.valueOf(leftVariable.getValue().token().lexeme());
-            c = rightVariable.getRegisterNumber();
-            // ADDI
-            opCode = 20;
-
-            // add float check here fADDI
-        }
+        
 
         return DLX.assemble(opCode, a, b, c);
     }
@@ -2677,6 +2652,7 @@ public class Compiler {
     }
 
     public int instructionToMachineCode (BEQ node) {
+        node.
         return 0;
     }
 
