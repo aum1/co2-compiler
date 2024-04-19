@@ -158,6 +158,7 @@ public class IRGenerator {
         // create blocks 
         BasicBlock thenBlock = new BasicBlock(BasicBlock.getNextBlockNumber(), thenList, null, null);
         BasicBlock blockAfterIf = new BasicBlock(BasicBlock.getNextBlockNumber(), new TACList(), null, null);
+        BasicBlock elseBlock = null;
 
         // if else block, then get list of else instructions
         if (node.hasElseBlock()) {
@@ -166,7 +167,7 @@ public class IRGenerator {
             visit(node.getElseBlock());
             isFirstBlock = false;
 
-            BasicBlock elseBlock = new BasicBlock(BasicBlock.getNextBlockNumber(), elseList, null, null);
+            elseBlock = new BasicBlock(BasicBlock.getNextBlockNumber(), elseList, null, null);
             previousBlock.addSuccessor(elseBlock, "fall-through");
             elseBlock.addSuccessor(blockAfterIf);
 
@@ -186,34 +187,34 @@ public class IRGenerator {
 
         if (relationSymbol != null) {
             if (relationSymbol.token().lexeme().equals("==")) {
-                previousBlock.addInstruction(new BEQ(TACList.getNextTACNumber(), previousBlock.getInstructions().getLatestVariable(), thenBlock.getID()));
+                previousBlock.addInstruction(new BEQ(TACList.getNextTACNumber(), previousBlock.getInstructions().getLatestVariable(), thenBlock, elseBlock));
             }
             if (relationSymbol.token().lexeme().equals("!=")) {
-                previousBlock.addInstruction(new BNE(TACList.getNextTACNumber(), previousBlock.getInstructions().getLatestVariable(), thenBlock.getID()));
+                previousBlock.addInstruction(new BNE(TACList.getNextTACNumber(), previousBlock.getInstructions().getLatestVariable(), thenBlock, elseBlock));
             }
             if (relationSymbol.token().lexeme().equals("<")) {
-                previousBlock.addInstruction(new BLT(TACList.getNextTACNumber(), previousBlock.getInstructions().getLatestVariable(), thenBlock.getID()));
+                previousBlock.addInstruction(new BLT(TACList.getNextTACNumber(), previousBlock.getInstructions().getLatestVariable(), thenBlock, elseBlock));
             }
             if (relationSymbol.token().lexeme().equals("<=")) {
-                previousBlock.addInstruction(new BLE(TACList.getNextTACNumber(), previousBlock.getInstructions().getLatestVariable(), thenBlock.getID()));
+                previousBlock.addInstruction(new BLE(TACList.getNextTACNumber(), previousBlock.getInstructions().getLatestVariable(), thenBlock, elseBlock));
             }
             if (relationSymbol.token().lexeme().equals(">")) {
-                previousBlock.addInstruction(new BGT(TACList.getNextTACNumber(), previousBlock.getInstructions().getLatestVariable(), thenBlock.getID()));
+                previousBlock.addInstruction(new BGT(TACList.getNextTACNumber(), previousBlock.getInstructions().getLatestVariable(), thenBlock, elseBlock));
             }
             if (relationSymbol.token().lexeme().equals(">=")) {
-                previousBlock.addInstruction(new BGE(TACList.getNextTACNumber(), previousBlock.getInstructions().getLatestVariable(), thenBlock.getID()));
+                previousBlock.addInstruction(new BGE(TACList.getNextTACNumber(), previousBlock.getInstructions().getLatestVariable(), thenBlock, elseBlock));
             }
         }
         else if (node.getRelation() instanceof BoolLiteral) {
             if (((BoolLiteral) node.getRelation()).getBoolean().token().lexeme().equals("true")) {
-                previousBlock.addInstruction(new BRA(TACList.getNextTACNumber(), thenBlock.getID()));
+                previousBlock.addInstruction(new BRA(TACList.getNextTACNumber(), thenBlock));
             }
             if (((BoolLiteral) node.getRelation()).getBoolean().token().lexeme().equals("false")) {
                 if (node.hasElseBlock()) {
-                    previousBlock.addInstruction(new BRA(TACList.getNextTACNumber(), elseBlockID));
+                    previousBlock.addInstruction(new BRA(TACList.getNextTACNumber(), elseBlock));
                 }
                 else {
-                    previousBlock.addInstruction(new BRA(TACList.getNextTACNumber(), blockAfterIf.getID()));
+                    previousBlock.addInstruction(new BRA(TACList.getNextTACNumber(), blockAfterIf));
                 }   
             }
         }

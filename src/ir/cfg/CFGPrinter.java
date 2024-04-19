@@ -211,7 +211,7 @@ public class CFGPrinter implements CFGVisitor {
 
     @Override
     public String visit(BEQ node) {
-        String toReturn = "beq " + node.getLeft() + " bb" + node.getRight();
+        String toReturn = "beq " + node.getLeft() + "? bb" + node.getTrueBasicBlock().getID() + " : bb" + node.getFalseBasicBlock().getID();
         return toReturn;
     }
 
