@@ -2607,13 +2607,24 @@ public class Compiler {
     }
 
     public int instructionToMachineCode(Add instruction) {
-        boolean isFloatOperation = instruction.getLeft().getSymbol().token().kind() == Kind.FLOAT_VAL || instruction.getRight().getSymbol().token().kind() == Kind.FLOAT_VAL;
         int opCode, a, b, c;
+        opCode = 0;
         a = instruction.getDest().getMachineCodeRepresentation();
         b = instruction.getLeft().getMachineCodeRepresentation();
         c = instruction.getRight().getMachineCodeRepresentation();
 
-        
+        if (instruction.getRight().isFloat() && instruction.getRight() instanceof Literal) {
+            // fADDI
+            opCode = 27;
+        }
+        else if (instruction.getRight().isFloat()) {
+            // fADD
+            opCode = 7;
+        }
+        else if (instruction.getRight() instanceof Literal) {
+            // ADDI
+            opCode = 20;
+        }
 
         return DLX.assemble(opCode, a, b, c);
     }
@@ -2673,7 +2684,6 @@ public class Compiler {
     }
 
     public int instructionToMachineCode (BEQ node) {
-        node.
         return 0;
     }
 
