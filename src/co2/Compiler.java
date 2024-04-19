@@ -2590,8 +2590,14 @@ public class Compiler {
         for (TAC currentInstruction : this.irHead.getInstructions()) {
             int instructionMachineCode = instructionToMachineCode(currentInstruction);
             generatedCode.add(instructionMachineCode);
+
+            // TODO: handle case for branch statements
         }
 
+
+        // add RET 0 instruction to show end of program
+        int ret0 = DLX.assemble(55, 0);
+        generatedCode.add(ret0);
 
         // convert array list to array and return
         int[] generatedCodeArray = new int[generatedCode.size()];
@@ -2684,34 +2690,62 @@ public class Compiler {
     }
 
     public int instructionToMachineCode (BEQ node) {
-        return 0;
+        int opCode = 47;
+        int a = node.getLeft().getMachineCodeRepresentation();
+        int c = node.getTrueBasicBlock().getID(); // TODO: figure out how to reference branch location
+        return DLX.assemble(opCode, a, c);
     }
-
-    public int instructionToMachineCode (BGE node) {
-        return 0;
-    }
-
-    public int instructionToMachineCode (BGT node) {
-        return 0;
-    }
-
-    public int instructionToMachineCode (BLE node) {
-        return 0;
+    
+    public int instructionToMachineCode (BNE node) {
+        int opCode = 48;
+        int a = node.getLeft().getMachineCodeRepresentation();
+        int c = node.getTrueBasicBlock().getID(); // TODO: figure out how to reference branch location
+        return DLX.assemble(opCode, a, c);
     }
 
     public int instructionToMachineCode (BLT node) {
-        return 0;
+        int opCode = 49;
+        int a = node.getLeft().getMachineCodeRepresentation();
+        int c = node.getTrueBasicBlock().getID(); // TODO: figure out how to reference branch location
+        return DLX.assemble(opCode, a, c);
     }
 
-    public int instructionToMachineCode (BNE node) {
-        return 0;
+    public int instructionToMachineCode (BGE node) {
+        int opCode = 50;
+        int a = node.getLeft().getMachineCodeRepresentation();
+        int c = node.getTrueBasicBlock().getID(); // TODO: figure out how to reference branch location
+        return DLX.assemble(opCode, a, c);
+    }
+
+    public int instructionToMachineCode (BLE node) {
+        int opCode = 51;
+        int a = node.getLeft().getMachineCodeRepresentation();
+        int c = node.getTrueBasicBlock().getID(); // TODO: figure out how to reference branch location
+        return DLX.assemble(opCode, a, c);
+    }
+
+    public int instructionToMachineCode (BGT node) {
+        int opCode = 52;
+        int a = node.getLeft().getMachineCodeRepresentation();
+        int c = node.getTrueBasicBlock().getID(); // TODO: figure out how to reference branch location
+        return DLX.assemble(opCode, a, c);
     }
 
     public int instructionToMachineCode (BRA node) {
-        return 0;
+        int opCode = 47;
+        int a = 0; // branch if register 0 == 0, but r0 always holds the value 0
+        int c = node.getTrueBasicBlock().getID(); // TODO: figure out how to reference branch location
+        return DLX.assemble(opCode, a, c);
     }
 
     public int instructionToMachineCode (Comparison node) {
+        if (node.getComparisonOperator().token().lexeme().equals("==")) {
+
+        }
+        else if (node.getComparisonOperator().token().lexeme().equals("!=")) {
+
+        }
+        // else if ()
         return 0;
     }
     
@@ -2720,10 +2754,6 @@ public class Compiler {
     }
 
     public int instructionToMachineCode (Call node) {
-        return 0;
-    }
-    
-    public int instructionToMachineCode (Literal node) {
         return 0;
     }
 
