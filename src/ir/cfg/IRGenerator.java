@@ -290,6 +290,11 @@ public class IRGenerator {
     public void visit(Assignment node) {
         Variable dest = new Variable(node.getIdent());
         visit(node.getRelation());
+
+        dest.setIsBool(currentInstructionList.getLatestVariable().isBool());
+        dest.setIsFloat(currentInstructionList.getLatestVariable().isFloat());
+        dest.setIsInt(currentInstructionList.getLatestVariable().isInt());
+
         currentInstructionList.addInstruction(new Assign(TACList.getNextTACNumber(), dest, currentInstructionList.getLatestVariable()));
         currentInstructionList.setLatestVariable(dest);
     }

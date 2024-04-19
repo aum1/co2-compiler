@@ -875,6 +875,7 @@ public class Compiler {
 
 // Type Checker ==============================================================
     // computation	= "main" {varDecl} {funcDecl} "{" statSeq "}" "."
+    Map<String, String> miniVarialeDeclarationList = new HashMap<>();
     private Computation computation () {
         Token mainToken = expectRetrieve(Token.Kind.MAIN);
 
@@ -889,6 +890,7 @@ public class Compiler {
                 Token ident = expectRetrieve(Token.Kind.IDENT);
                 // Token ident = designator();
                 variables.addDeclaration(new VariableDeclaration(type.lineNumber(), type.charPosition(), new Symbol(ident), new Symbol(type)));
+                miniVarialeDeclarationList.put(ident.lexeme(), type.kind().toString());
             } while (accept(Token.Kind.COMMA));
 
             expect(Token.Kind.SEMICOLON);
@@ -998,6 +1000,7 @@ public class Compiler {
                 Token ident = expectRetrieve(Token.Kind.IDENT);
                 // Token ident = designator();
                 varDecl.addDeclaration(new VariableDeclaration(type.lineNumber(), type.charPosition(), new Symbol(ident), new Symbol(type)));
+                miniVarialeDeclarationList.put(ident.lexeme(), type.kind().toString());
             } while (accept(Token.Kind.COMMA));
 
             expect(Token.Kind.SEMICOLON);
@@ -1088,15 +1091,19 @@ public class Compiler {
         } else {
             Token terminal =  matchNonTerminal(NonTerminal.UNARY_OP);
             if (terminal.is(Token.Kind.UNI_INC)) {
+                VariableReference varReferenceNode = new VariableReference(designatorToken.lineNumber(), designatorToken.charPosition(), new Symbol(designatorToken));
+                varReferenceNode.setIsInt(true);
                 return new Assignment(designatorToken.lineNumber(), designatorToken.charPosition(), new Symbol(designatorToken), new Symbol(terminal),
                 new Addition(designatorToken.lineNumber(), designatorToken.charPosition(), new Symbol(new Token("+", 0, 0)), 
-                    new VariableReference(designatorToken.lineNumber(), designatorToken.charPosition(), new Symbol(designatorToken)), 
+                    varReferenceNode, 
                         new IntegerLiteral(designatorToken.lineNumber(), designatorToken.charPosition(),  new Symbol(new Token("1", 0, 0)))));
             }
             else {
+                VariableReference varReferenceNode = new VariableReference(designatorToken.lineNumber(), designatorToken.charPosition(), new Symbol(designatorToken));
+                varReferenceNode.setIsInt(true);
                 return new Assignment(designatorToken.lineNumber(), designatorToken.charPosition(), new Symbol(designatorToken), new Symbol(terminal),
                 new Subtraction(designatorToken.lineNumber(), designatorToken.charPosition(), new Symbol(new Token("+", 0, 0)), 
-                    new VariableReference(designatorToken.lineNumber(), designatorToken.charPosition(), new Symbol(designatorToken)), 
+                    varReferenceNode, 
                         new IntegerLiteral(designatorToken.lineNumber(), designatorToken.charPosition(),  new Symbol(new Token("1", 0, 0)))));
             }
             
@@ -1321,10 +1328,24 @@ public class Compiler {
             }
 
             if (dimensionList.size() == 0) {
-                returnNode = new VariableReference(currToken.lineNumber(), currToken.charPosition(), new Symbol(currToken));
+                VariableReference varReferenceNode = new VariableReference(currToken.lineNumber(), currToken.charPosition(), new Symbol(currToken));
+                varReferenceNode.setIsBool(miniVarialeDeclarationList.get(currToken.lexeme()).contains("BOOL"));
+                varReferenceNode.setIsFloat(miniVarialeDeclarationList.get(currToken.lexeme()).contains("FLOAT"));
+                varReferenceNode.setIsInt(miniVarialeDeclarationList.get(currToken.lexeme()).contains("INT"));
+
+                System.out.println("For: " + currToken.lexeme() + " we got " + miniVarialeDeclarationList.get(currToken.lexeme()));
+
+                returnNode = varReferenceNode;
             }
             else {
-                returnNode = new VariableReference(currToken.lineNumber(), currToken.charPosition(), new Symbol(currToken), dimensionList);
+                VariableReference varReferenceNode = new VariableReference(currToken.lineNumber(), currToken.charPosition(), new Symbol(currToken), dimensionList);
+                varReferenceNode.setIsBool(miniVarialeDeclarationList.get(currToken.lexeme()).contains("BOOL"));
+                varReferenceNode.setIsFloat(miniVarialeDeclarationList.get(currToken.lexeme()).contains("FLOAT"));
+                varReferenceNode.setIsInt(miniVarialeDeclarationList.get(currToken.lexeme()).contains("INT"));
+
+                System.out.println("For: " + currToken.lexeme() + " we got " + miniVarialeDeclarationList.get(currToken.lexeme()));
+
+                returnNode = varReferenceNode;
             }
         } else if (have(Token.Kind.NOT)) {
             expect(Token.Kind.NOT);
@@ -2331,7 +2352,7 @@ public class Compiler {
 
         // map from edge and adjacent list to other variables
         Map<String, Set<String>> vertices = getVertexGraph();
-        printOutVariableGraph(vertices);
+        // printOutVariableGraph(vertices);
         Stack<String> removedVertices = new Stack<String>();
         
         // while graph is not empty
@@ -2369,7 +2390,7 @@ public class Compiler {
                 // TODO: mark as possible spillages
             }
         }
-        System.out.println("Done with initial removals");
+        // System.out.println("Done with initial removals");
 
         // retrieve the graph again, to get the edges to add
         Map<String, Set<String>> originalGraph = getVertexGraph();
@@ -2392,7 +2413,7 @@ public class Compiler {
                 // if we find a register number that does not align with all the edges
                 boolean foundRegisterValue = true;
                 for (int i = 0; i < originalGraph.get(poppedVertex).size(); i++) {
-                    System.out.println("comparing " + registerNumber + ": " + poppedVertex + " to " + (String) originalGraph.get(poppedVertex).toArray()[i]);
+                    // System.out.println("comparing " + registerNumber + ": " + poppedVertex + " to " + (String) originalGraph.get(poppedVertex).toArray()[i]);
                     if (variableRegisterMap.get((String) originalGraph.get(poppedVertex).toArray()[i]) == registerNumber) {
                         foundRegisterValue = false;
                     }
@@ -2400,7 +2421,7 @@ public class Compiler {
 
                 if (foundRegisterValue) {
                     variableRegisterMap.put(poppedVertex, registerNumber);
-                    System.out.println("Assigned " + poppedVertex + "->" +  registerNumber);
+                    // System.out.println("Assigned " + poppedVertex + "->" +  registerNumber);
                     break;
                 }
                 else {
@@ -2413,7 +2434,7 @@ public class Compiler {
                 
             }
         }
-        printOutVariableRegisters(variableRegisterMap);
+        // printOutVariableRegisters(variableRegisterMap);
         assignRegistersToVariables(irHead, variableRegisterMap);
     }
 
@@ -2455,7 +2476,7 @@ public class Compiler {
         if (variableRegisterMap.containsKey(lexeme)) {
             int registerNumber = variableRegisterMap.get(lexeme);
             variable.setRegisterNumber(registerNumber);
-            System.out.println("Assigned register " + registerNumber + " to variable " + lexeme);
+            // System.out.println("Assigned register " + registerNumber + " to variable " + lexeme);
         }
     }
 

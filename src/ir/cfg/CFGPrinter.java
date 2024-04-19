@@ -39,6 +39,7 @@ public class CFGPrinter implements CFGVisitor {
 
     @Override
     public String visit(BasicBlock node) {
+        LegiblePrint(node);
         // Preamble and computation block
         String toReturn = "digraph G { \n node[shape=record]; \n "; 
         toReturn += "subgraph cluster_" + node.getID() + " { \n";
@@ -364,6 +365,10 @@ public class CFGPrinter implements CFGVisitor {
             }
             if (currInstructions.getInstructions().get(i) instanceof Mod) {
                 System.out.println(((Mod) instruction).getID() + ":" + ((Mod) instruction).getDest() + " = " + ((Mod) instruction).getLeft() + " % " + ((Mod) instruction).getRight());
+            }
+
+            if (instruction.getDest() != null) {
+                System.out.println("set dest: " + instruction.getDest().isBool() + " " + instruction.getDest().isFloat() + " " + instruction.getDest().isInt());
             }
         }
     }
