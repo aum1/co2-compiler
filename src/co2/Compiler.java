@@ -2435,6 +2435,7 @@ public class Compiler {
             }
         }
         // printOutVariableRegisters(variableRegisterMap);
+        this.variableRegisterMap = variableRegisterMap;
         assignRegistersToVariables(irHead, variableRegisterMap);
     }
 
@@ -2584,6 +2585,7 @@ public class Compiler {
 
 // Code Generation ==============================================================
     Map<String, Integer> variableToOffset = new HashMap<>();
+    Map<String, Integer> variableRegisterMap = null;
 
     public int[] genCode() {
         CFGPrinter.LegiblePrint(irHead);
@@ -2592,9 +2594,10 @@ public class Compiler {
 
         // start with computation block and traverse
         for (TAC currentInstruction : this.irHead.getInstructions()) {
-            int instructionMachineCode = instructionToMachineCode(currentInstruction);
-            generatedCode.add(instructionMachineCode);
-
+            ArrayList<Integer> instructionMachineCode = instructionToMachineCode(currentInstruction);
+            for (Integer i : instructionMachineCode) {
+                generatedCode.add(i);
+            }
             // TODO: handle case for branch statements
         }
 
@@ -2611,66 +2614,67 @@ public class Compiler {
         return generatedCodeArray;
     }
 
-    public int instructionToMachineCode(TAC instruction) {
+    public ArrayList<Integer> instructionToMachineCode(TAC instruction) {
+        ArrayList<Integer> toReturn = new ArrayList<>();
         if (instruction instanceof Add) {
-            return instructionToMachineCode((Add) (instruction));
+            toReturn.add(instructionToMachineCode((Add) (instruction)));
         }
         if (instruction instanceof Sub) {
-            return instructionToMachineCode((Sub) (instruction));
+            toReturn.add(instructionToMachineCode((Sub) (instruction)));
         }
         if (instruction instanceof Mul) {
-            return instructionToMachineCode((Mul) (instruction));
+            toReturn.add(instructionToMachineCode((Mul) (instruction)));
         }
         if (instruction instanceof Div) {
-            return instructionToMachineCode((Div) (instruction));
+            toReturn.add(instructionToMachineCode((Div) (instruction)));
         }
         if (instruction instanceof Mod) {
-            return instructionToMachineCode((Mod) (instruction));
+            toReturn.add(instructionToMachineCode((Mod) (instruction)));
         }
         if (instruction instanceof Pow) {
-            return instructionToMachineCode((Pow) (instruction));
+            toReturn.add(instructionToMachineCode((Pow) (instruction)));
         }
         if (instruction instanceof And) {
-            return instructionToMachineCode((And) (instruction));
+            toReturn.add(instructionToMachineCode((And) (instruction)));
         }
         if (instruction instanceof Or) {
-            return instructionToMachineCode((Or) (instruction));
+            toReturn.add(instructionToMachineCode((Or) (instruction)));
         }
         if (instruction instanceof BEQ) {
-            return instructionToMachineCode((BEQ) (instruction));
+            toReturn.add(instructionToMachineCode((BEQ) (instruction)));
         }
         if (instruction instanceof BNE) {
-            return instructionToMachineCode((BNE) (instruction));
+            toReturn.add(instructionToMachineCode((BNE) (instruction)));
         }
         if (instruction instanceof BLT) {
-            return instructionToMachineCode((BLT) (instruction));
+            toReturn.add(instructionToMachineCode((BLT) (instruction)));
         }
         if (instruction instanceof BGE) {
-            return instructionToMachineCode((BGE) (instruction));
+            toReturn.add(instructionToMachineCode((BGE) (instruction)));
         }
         if (instruction instanceof BLE) {
-            return instructionToMachineCode((BLE) (instruction));
+            toReturn.add(instructionToMachineCode((BLE) (instruction)));
         }
         if (instruction instanceof BGT) {
-            return instructionToMachineCode((BLE) (instruction));
+            toReturn.add(instructionToMachineCode((BLE) (instruction)));
         }
         if (instruction instanceof BRA) {
-            return instructionToMachineCode((BRA) (instruction));
+            toReturn.add(instructionToMachineCode((BRA) (instruction)));
         }
         if (instruction instanceof Comparison) {
-            return instructionToMachineCode((Comparison) (instruction));
+            toReturn.add(instructionToMachineCode((Comparison) (instruction)));
         }
         if (instruction instanceof Assign) {
-            return instructionToMachineCode((Assign) (instruction));
+            toReturn.add(instructionToMachineCode((Assign) (instruction)));
         }
         if (instruction instanceof Call) {
-            return instructionToMachineCode((Call) (instruction));
+            toReturn.add(instructionToMachineCode((Call) (instruction)));
         }
         if (instruction instanceof Return) {
-            return instructionToMachineCode((Assign) (instruction));
+            toReturn.add(instructionToMachineCode((Assign) (instruction)));
         }
 
-        return 0;
+        return toReturn;
     }
 
     public int instructionToMachineCode(Add instruction) {
@@ -2935,23 +2939,27 @@ public class Compiler {
                 return DLX.assemble(opCode, node.getDest().getMachineCodeRepresentation());
             case "printInt":
                 opCode = 59;
-                // TODO: fix this to get register value
-                // return DLX.assemble(opCode, ((VariableReference) node.getArgs().getExpressionParameters().get(0)).g)
+                return DLX.assemble(opCode, variableRegisterMap.get(((VariableReference) node.getArgs().getExpressionParameters().get(0)).getIdent().token().lexeme()));
             case "printFloat":
                 opCode = 60;
-                // TODO: fix this to get register value
+                return DLX.assemble(opCode, variableRegisterMap.get(((VariableReference) node.getArgs().getExpressionParameters().get(0)).getIdent().token().lexeme()));
             case "printBool":
                 opCode = 61;
+                return DLX.assemble(opCode, variableRegisterMap.get(((VariableReference) node.getArgs().getExpressionParameters().get(0)).getIdent().token().lexeme()));
             case "println":
                 opCode = 62;
                 return DLX.assemble(opCode);
+            default:
+                opCode = 63;
+                // handle call function here 
         }
         
         return 0;
     }
 
     public int instructionToMachineCode (Return node) {
-        return 0;
+        // TODO: add PC here 
+        return DLX.assemble(55, 0);
     }
 }
 
