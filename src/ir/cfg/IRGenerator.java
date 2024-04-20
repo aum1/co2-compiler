@@ -134,9 +134,13 @@ public class IRGenerator {
     }
 
     public void visit(ReturnStatement node) {
-        // currentInstructionList.addInstruction(ne);
-        visit(node.getRelation());
-        currentInstructionList.addInstruction(new Return(BasicBlock.getNextBlockNumber()));
+        if (node.hasRelation()) {
+            visit(node.getRelation());
+            currentInstructionList.addInstruction(new Return(BasicBlock.getNextBlockNumber(), currentInstructionList.getLatestVariable()));
+        }
+        else {
+            currentInstructionList.addInstruction(new Return(BasicBlock.getNextBlockNumber()));
+        }
     }
 
     public void visit(StatementSequence node) {

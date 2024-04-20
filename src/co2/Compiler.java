@@ -2671,7 +2671,8 @@ public class Compiler {
             toReturn.add(instructionToMachineCode((Call) (instruction)));
         }
         if (instruction instanceof Return) {
-            toReturn.add(instructionToMachineCode((Assign) (instruction)));
+            ArrayList<Integer> retArraylist = instructionToMachineCode((Return) (instruction));
+            return retArraylist;
         }
 
         return toReturn;
@@ -2957,9 +2958,23 @@ public class Compiler {
         return 0;
     }
 
-    public int instructionToMachineCode (Return node) {
-        // TODO: add PC here 
-        return DLX.assemble(55, 0);
+    public ArrayList<Integer> instructionToMachineCode (Return node) {
+        ArrayList<Integer> toReturn = new ArrayList<>();
+        if (node.hasReturnValue()) {
+            if (node.getReturnValue().isInt()) {
+                toReturn.add(DLX.assemble(20, 31, 0, node.getReturnValue().getMachineCodeRepresentation()));
+            }
+            if (node.getReturnValue().isFloat()) {
+                toReturn.add(DLX.assemble(27, 31, 0, node.getReturnValue().getMachineCodeRepresentation()));
+            }
+            if (node.getReturnValue().isBool()) {
+                toReturn.add(DLX.assemble(33, 31, 0, node.getReturnValue().getMachineCodeRepresentation()));
+            }
+        }
+        
+        // TODO: add address
+        toReturn.add(DLX.assemble(55, 0));
+        return toReturn;
     }
 }
 

@@ -259,7 +259,10 @@ public class CFGPrinter implements CFGVisitor {
 
     @Override
     public String visit(Return node) {
-        String toReturn = "ret";
+        if (node.hasReturnValue()) {
+            return ("return: " + node.getReturnValue());
+        }
+        String toReturn = "return: ";
         return toReturn;
     }
 
