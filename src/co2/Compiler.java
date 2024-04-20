@@ -2635,59 +2635,135 @@ public class Compiler {
         return DLX.assemble(opCode, a, b, c);
     }
 
-    public int instructionToMachineCode (Sub node) {
-        // SUB
-        // fSUB
-        // SUBI
-        // fSUBI
-        return 0;
+    public int instructionToMachineCode(Sub instruction) {
+        int opCode, a, b, c;
+        opCode = 1; // Default for SUB a,b,c
+        a = instruction.getDest().getMachineCodeRepresentation();
+        b = instruction.getLeft().getMachineCodeRepresentation();
+        c = instruction.getRight().getMachineCodeRepresentation();
+    
+        if (instruction.getRight().isFloat() && instruction.getRight() instanceof Literal) {
+            opCode = 28; }
+        else if (instruction.getRight().isFloat()) {
+            opCode = 8; 
+        }
+        else if (instruction.getRight() instanceof Literal) {
+            opCode = 21;
+        }
+    
+        return DLX.assemble(opCode, a, b, c);
     }
+    
 
-    public int instructionToMachineCode (Mul node) {
-        // MUL
-        // fMUL
-        // MULI
-        // fMULI
-        return 0;
+    public int instructionToMachineCode(Mul instruction) {
+        int opCode, a, b, c;
+        opCode = 2;
+        a = instruction.getDest().getMachineCodeRepresentation();
+        b = instruction.getLeft().getMachineCodeRepresentation();
+        c = instruction.getRight().getMachineCodeRepresentation();
+    
+        if (instruction.getRight().isFloat() && instruction.getRight() instanceof Literal) {
+            opCode = 29;
+        }
+        else if (instruction.getRight().isFloat()) {
+            opCode = 9;
+        }
+        else if (instruction.getRight() instanceof Literal) {
+            opCode = 22;
+        }
+    
+        return DLX.assemble(opCode, a, b, c);
     }
+    
 
-    public int instructionToMachineCode (Div node) {
-        // DIV
-        // fDIV
-        // DIVI
-        // fDIVI
-        return 0;
+    public int instructionToMachineCode(Div instruction) {
+        int opCode, a, b, c;
+        opCode = 3; 
+        a = instruction.getDest().getMachineCodeRepresentation();
+        b = instruction.getLeft().getMachineCodeRepresentation();
+        c = instruction.getRight().getMachineCodeRepresentation();
+    
+        if (instruction.getRight().isFloat() && instruction.getRight() instanceof Literal) {
+            opCode = 30;
+        }
+        else if (instruction.getRight().isFloat()) {
+            opCode = 10;
+        }
+        else if (instruction.getRight() instanceof Literal) {
+            opCode = 23;
+        }
+    
+        return DLX.assemble(opCode, a, b, c);
     }
+    
 
-    public int instructionToMachineCode (Mod node) {
-        // MOD
-        // fMOD
-        // MODI
-        // fMODI
-        return 0;
+    public int instructionToMachineCode(Mod instruction) {
+        int opCode, a, b, c;
+        opCode = 4;
+        a = instruction.getDest().getMachineCodeRepresentation();
+        b = instruction.getLeft().getMachineCodeRepresentation();
+        c = instruction.getRight().getMachineCodeRepresentation();
+    
+        if (instruction.getRight().isFloat() && instruction.getRight() instanceof Literal) {
+            opCode = 31;
+        }
+        else if (instruction.getRight().isFloat()) {
+            opCode = 11; 
+        }
+        else if (instruction.getRight() instanceof Literal) {
+            opCode = 24;
+        }
+    
+        return DLX.assemble(opCode, a, b, c);
     }
+    
 
-    public int instructionToMachineCode (Pow node) {
-        // POW
-        // POWI
-        return 0;
+    public int instructionToMachineCode(Pow instruction) {
+        int opCode, a, b, c;
+        opCode = 5;
+        a = instruction.getDest().getMachineCodeRepresentation();
+        b = instruction.getLeft().getMachineCodeRepresentation();
+        c = instruction.getRight().getMachineCodeRepresentation();
+    
+        if (instruction.getRight() instanceof Literal) {
+            opCode = 25;
+        }
+    
+        return DLX.assemble(opCode, a, b, c);
     }
+    
 
-    public int instructionToMachineCode (And node) {
-        // AND
-        // ANDI
-        // MODI
-        // fMODI
-        return 0;
+    public int instructionToMachineCode(And instruction) {
+        int opCode, a, b, c;
+        opCode = 14; // Default opcode for AND a,b,c
+        a = instruction.getDest().getMachineCodeRepresentation();
+        b = instruction.getLeft().getMachineCodeRepresentation();
+        c = instruction.getRight().getMachineCodeRepresentation();
+    
+        if (instruction.getRight() instanceof Literal) {
+            // ANDI - AND with immediate
+            opCode = 34; // Opcode for ANDI
+        }
+    
+        return DLX.assemble(opCode, a, b, c);
     }
+    
 
-    public int instructionToMachineCode (Or node) {
-        // OR
-        // ORI
-        // MODI
-        // fMODI
-        return 0;
+    public int instructionToMachineCode(Or instruction) {
+        int opCode, a, b, c;
+        opCode = 13; // Default opcode for OR a,b,c
+        a = instruction.getDest().getMachineCodeRepresentation();
+        b = instruction.getLeft().getMachineCodeRepresentation();
+        c = instruction.getRight().getMachineCodeRepresentation();
+    
+        if (instruction.getRight() instanceof Literal) {
+            // ORI - OR with immediate
+            opCode = 33; // Opcode for ORI
+        }
+    
+        return DLX.assemble(opCode, a, b, c);
     }
+    
 
     public int instructionToMachineCode (BEQ node) {
         int opCode = 47;
