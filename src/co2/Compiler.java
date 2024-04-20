@@ -1333,7 +1333,7 @@ public class Compiler {
                 varReferenceNode.setIsFloat(miniVarialeDeclarationList.get(currToken.lexeme()).contains("FLOAT"));
                 varReferenceNode.setIsInt(miniVarialeDeclarationList.get(currToken.lexeme()).contains("INT"));
 
-                System.out.println("For: " + currToken.lexeme() + " we got " + miniVarialeDeclarationList.get(currToken.lexeme()));
+                // System.out.println("For: " + currToken.lexeme() + " we got " + miniVarialeDeclarationList.get(currToken.lexeme()));
 
                 returnNode = varReferenceNode;
             }
@@ -1343,7 +1343,7 @@ public class Compiler {
                 varReferenceNode.setIsFloat(miniVarialeDeclarationList.get(currToken.lexeme()).contains("FLOAT"));
                 varReferenceNode.setIsInt(miniVarialeDeclarationList.get(currToken.lexeme()).contains("INT"));
 
-                System.out.println("For: " + currToken.lexeme() + " we got " + miniVarialeDeclarationList.get(currToken.lexeme()));
+                // System.out.println("For: " + currToken.lexeme() + " we got " + miniVarialeDeclarationList.get(currToken.lexeme()));
 
                 returnNode = varReferenceNode;
             }
@@ -2408,7 +2408,7 @@ public class Compiler {
             String poppedVertex = removedVertices.pop();
 
             // check if we can color the node
-            int registerNumber = 0;
+            int registerNumber = 1;
             while (registerNumber < numRegs) {
                 // if we find a register number that does not align with all the edges
                 boolean foundRegisterValue = true;
@@ -2586,6 +2586,8 @@ public class Compiler {
     Map<String, Integer> variableToOffset = new HashMap<>();
 
     public int[] genCode() {
+        CFGPrinter.LegiblePrint(irHead);
+        
         ArrayList<Integer> generatedCode = new ArrayList<>();
 
         // start with computation block and traverse
@@ -2610,7 +2612,64 @@ public class Compiler {
     }
 
     public int instructionToMachineCode(TAC instruction) {
-        // use assemble in DLX
+        if (instruction instanceof Add) {
+            return instructionToMachineCode((Add) (instruction));
+        }
+        if (instruction instanceof Sub) {
+            return instructionToMachineCode((Sub) (instruction));
+        }
+        if (instruction instanceof Mul) {
+            return instructionToMachineCode((Mul) (instruction));
+        }
+        if (instruction instanceof Div) {
+            return instructionToMachineCode((Div) (instruction));
+        }
+        if (instruction instanceof Mod) {
+            return instructionToMachineCode((Mod) (instruction));
+        }
+        if (instruction instanceof Pow) {
+            return instructionToMachineCode((Pow) (instruction));
+        }
+        if (instruction instanceof And) {
+            return instructionToMachineCode((And) (instruction));
+        }
+        if (instruction instanceof Or) {
+            return instructionToMachineCode((Or) (instruction));
+        }
+        if (instruction instanceof BEQ) {
+            return instructionToMachineCode((BEQ) (instruction));
+        }
+        if (instruction instanceof BNE) {
+            return instructionToMachineCode((BNE) (instruction));
+        }
+        if (instruction instanceof BLT) {
+            return instructionToMachineCode((BLT) (instruction));
+        }
+        if (instruction instanceof BGE) {
+            return instructionToMachineCode((BGE) (instruction));
+        }
+        if (instruction instanceof BLE) {
+            return instructionToMachineCode((BLE) (instruction));
+        }
+        if (instruction instanceof BGT) {
+            return instructionToMachineCode((BLE) (instruction));
+        }
+        if (instruction instanceof BRA) {
+            return instructionToMachineCode((BRA) (instruction));
+        }
+        if (instruction instanceof Comparison) {
+            return instructionToMachineCode((Comparison) (instruction));
+        }
+        if (instruction instanceof Assign) {
+            return instructionToMachineCode((Assign) (instruction));
+        }
+        if (instruction instanceof Call) {
+            return instructionToMachineCode((Call) (instruction));
+        }
+        if (instruction instanceof Return) {
+            return instructionToMachineCode((Assign) (instruction));
+        }
+
         return 0;
     }
 
@@ -2766,7 +2825,6 @@ public class Compiler {
         return DLX.assemble(opCode, a, b, c);
     }
     
-
     public int instructionToMachineCode (BEQ node) {
         int opCode = 47;
         int a = node.getLeft().getMachineCodeRepresentation();

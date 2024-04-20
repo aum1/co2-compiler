@@ -39,7 +39,7 @@ public class CFGPrinter implements CFGVisitor {
 
     @Override
     public String visit(BasicBlock node) {
-        LegiblePrint(node);
+
         // Preamble and computation block
         String toReturn = "digraph G { \n node[shape=record]; \n "; 
         toReturn += "subgraph cluster_" + node.getID() + " { \n";
@@ -347,29 +347,111 @@ public class CFGPrinter implements CFGVisitor {
         System.out.println("My instructions");
         for (int i = 0; i < currInstructions.getInstructions().size(); i++) {
             TAC instruction = currInstructions.getInstructions().get(i);
+            String destStringPredecessor = "";
+            String leftStringPredecessor = "";
+            String rightStringPredecessor = "";
+            if (instruction.getDest() instanceof Variable) {
+                destStringPredecessor = "R";
+            }
+            else {
+                destStringPredecessor = "$";
+            }
 
             if (currInstructions.getInstructions().get(i) instanceof Assign) {
-                System.out.println(((Assign) instruction).getID() + ":" + ((Assign) instruction).getDest() + "=" + ((Assign) instruction).getRight());
+                if (((Assign) instruction).getRight() instanceof Variable) {
+                    rightStringPredecessor = "R";
+                }
+                else {
+                    rightStringPredecessor = "$";
+                }
+                System.out.println(((Assign) instruction).getID() + ":" + destStringPredecessor + ((Assign) instruction).getDest().getMachineCodeRepresentation() + "=" + rightStringPredecessor + ((Assign) instruction).getRight().getMachineCodeRepresentation());
             }
             if (currInstructions.getInstructions().get(i) instanceof Add) {
-                System.out.println(((Add) instruction).getID() + ":" + ((Add) instruction).getDest() + " = " + ((Add) instruction).getLeft() + " + " + ((Add) instruction).getRight());
+                if (((Add) instruction).getRight() instanceof Variable) {
+                    rightStringPredecessor = "R";
+                }
+                else {
+                    rightStringPredecessor = "$";
+                }
+
+                if (((Add) instruction).getLeft() instanceof Variable) {
+                    leftStringPredecessor = "R";
+                }
+                else {
+                    leftStringPredecessor = "$";
+                }
+
+                System.out.println(((Add) instruction).getID() + ":" + destStringPredecessor + ((Add) instruction).getDest().getMachineCodeRepresentation() + " = " + rightStringPredecessor + ((Add) instruction).getLeft().getMachineCodeRepresentation() + " + " + leftStringPredecessor + ((Add) instruction).getRight().getMachineCodeRepresentation());
             }
             if (currInstructions.getInstructions().get(i) instanceof Sub) {
-                System.out.println(((Sub) instruction).getID() + ":" + ((Sub) instruction).getDest() + " = " + ((Sub) instruction).getLeft() + " - " + ((Sub) instruction).getRight());
+                if (((Sub) instruction).getRight() instanceof Variable) {
+                    rightStringPredecessor = "R";
+                }
+                else {
+                    rightStringPredecessor = "$";
+                }
+
+                if (((Sub) instruction).getLeft() instanceof Variable) {
+                    leftStringPredecessor = "R";
+                }
+                else {
+                    leftStringPredecessor = "$";
+                }
+
+                System.out.println(((Sub) instruction).getID() + ":" + destStringPredecessor + ((Sub) instruction).getDest().getMachineCodeRepresentation() + " = " + rightStringPredecessor + ((Sub) instruction).getLeft().getMachineCodeRepresentation() + " - " + leftStringPredecessor + ((Sub) instruction).getRight().getMachineCodeRepresentation());
             }
             if (currInstructions.getInstructions().get(i) instanceof Mul) {
-                System.out.println(((Mul) instruction).getID() + ":" + ((Mul) instruction).getDest() + " = " + ((Mul) instruction).getLeft() + " * " + ((Mul) instruction).getRight());
+                if (((Mul) instruction).getRight() instanceof Variable) {
+                    rightStringPredecessor = "R";
+                }
+                else {
+                    rightStringPredecessor = "$";
+                }
+
+                if (((Mul) instruction).getLeft() instanceof Variable) {
+                    leftStringPredecessor = "R";
+                }
+                else {
+                    leftStringPredecessor = "$";
+                }
+                System.out.println(((Mul) instruction).getID() + ":" + destStringPredecessor + ((Mul) instruction).getDest().getMachineCodeRepresentation() + " = " + rightStringPredecessor + ((Mul) instruction).getLeft().getMachineCodeRepresentation() + " * " + leftStringPredecessor + ((Mul) instruction).getRight().getMachineCodeRepresentation());
             }
             if (currInstructions.getInstructions().get(i) instanceof Pow) {
-                System.out.println(((Pow) instruction).getID() + ":" + ((Pow) instruction).getDest() + " = " + ((Pow) instruction).getLeft() + " ^ " + ((Pow) instruction).getRight());
+                if (((Pow) instruction).getRight() instanceof Variable) {
+                    rightStringPredecessor = "R";
+                }
+                else {
+                    rightStringPredecessor = "$";
+                }
+
+                if (((Pow) instruction).getLeft() instanceof Variable) {
+                    leftStringPredecessor = "R";
+                }
+                else {
+                    leftStringPredecessor = "$";
+                }
+                System.out.println(((Pow) instruction).getID() + ":" + destStringPredecessor + ((Pow) instruction).getDest().getMachineCodeRepresentation() + " = " + rightStringPredecessor + ((Pow) instruction).getLeft().getMachineCodeRepresentation() + " ^ " + leftStringPredecessor + ((Pow) instruction).getRight().getMachineCodeRepresentation());
             }
             if (currInstructions.getInstructions().get(i) instanceof Mod) {
-                System.out.println(((Mod) instruction).getID() + ":" + ((Mod) instruction).getDest() + " = " + ((Mod) instruction).getLeft() + " % " + ((Mod) instruction).getRight());
+                if (((Mod) instruction).getRight() instanceof Variable) {
+                    rightStringPredecessor = "R";
+                }
+                else {
+                    rightStringPredecessor = "$";
+                }
+
+                if (((Mod) instruction).getLeft() instanceof Variable) {
+                    leftStringPredecessor = "R";
+                }
+                else {
+                    leftStringPredecessor = "$";
+                }
+                System.out.println(((Mod) instruction).getID() + ":" + destStringPredecessor + ((Mod) instruction).getDest().getMachineCodeRepresentation() + " = " + rightStringPredecessor + ((Mod) instruction).getLeft().getMachineCodeRepresentation() + " % " + leftStringPredecessor + ((Mod) instruction).getRight().getMachineCodeRepresentation());
             }
 
-            if (instruction.getDest() != null) {
-                System.out.println("set dest: " + instruction.getDest().isBool() + " " + instruction.getDest().isFloat() + " " + instruction.getDest().isInt());
-            }
+            // if (instruction.getDest() != null) {
+            //     System.out.println("set dest: " + instruction.getDest().isBool() + " " + instruction.getDest().isFloat() + " " + instruction.getDest().isInt());
+            // }
         }
     }
 }

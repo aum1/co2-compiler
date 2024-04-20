@@ -24,6 +24,8 @@ public class CompilerTester {
         options.addOption("loop", "convergence", false, "Run all optimization specified by -o until convergence");
         options.addOption("max", "maxOpt", false, "Run all optimizations till convergence");
 
+        options.addOption("asm", "assembly", false, "Output assembly of generated machine code");
+
 
         HelpFormatter formatter = new HelpFormatter();
         CommandLineParser cmdParser = new DefaultParser();
@@ -172,7 +174,7 @@ public class CompilerTester {
             String asmFile = sourceFile.substring(0, sourceFile.lastIndexOf('.')) + "_asm.txt";
             try (PrintStream out = new PrintStream(asmFile)) {
                 for (int i = 0; i < program.length; i++) {
-                    out.print(i + ":\t" + DLX.instrString(program[i])); // \newline included in DLX.instrString()
+                    System.out.print(i + ":\t" + DLX.instrString(program[i])); // \newline included in DLX.instrString()
                 }
             } catch (IOException e) {
                 System.err.println("Error accessing the asm file: \"" + asmFile + "\"");
