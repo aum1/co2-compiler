@@ -2583,6 +2583,8 @@ public class Compiler {
     }   
 
 // Code Generation ==============================================================
+    Map<String, Integer> variableToOffset = new HashMap<>();
+
     public int[] genCode() {
         ArrayList<Integer> generatedCode = new ArrayList<>();
 
@@ -2814,22 +2816,79 @@ public class Compiler {
         return DLX.assemble(opCode, a, c);
     }
 
-    public int instructionToMachineCode (Comparison node) {
-        if (node.getComparisonOperator().token().lexeme().equals("==")) {
-
+    public int instructionToMachineCode (Comparison instruction) {
+        int opCode, a, b, c;
+        opCode = 6; 
+        a = instruction.getDest().getMachineCodeRepresentation();
+        b = instruction.getLeft().getMachineCodeRepresentation();
+        c = instruction.getRight().getMachineCodeRepresentation();
+    
+        if (instruction.getRight().isFloat() && instruction.getRight() instanceof Literal) {
+            opCode = 32;
         }
-        else if (node.getComparisonOperator().token().lexeme().equals("!=")) {
-
+        else if (instruction.getRight().isFloat()) {
+            opCode = 12;
         }
-        // else if ()
-        return 0;
+        else if (instruction.getRight() instanceof Literal) {
+            opCode = 26;
+        }
+    
+        return DLX.assemble(opCode, a, b, c);
     }
     
     public int instructionToMachineCode (Assign node) {
+        // if setting to constant
+        if (node.getRight() instanceof Literal) {
+            if (((Literal) node.getRight()).isBool()) {
+                // if a boolean, add an or with the value 0 and the 
+                return DLX.assemble(33, node.getDest().getMachineCodeRepresentation(), 0, node.getRight().getMachineCodeRepresentation());
+            }
+            else if (((Literal) node.getRight()).isFloat()) {
+                // float add with the value 0
+                return DLX.assemble(27, node.getDest().getMachineCodeRepresentation(), 0, node.getRight().getMachineCodeRepresentation());
+            }
+            else if (((Literal) node.getRight()).isInt()) {
+                // int add with the value 0
+                return DLX.assemble(20, node.getDest().getMachineCodeRepresentation(), 0, node.getRight().getMachineCodeRepresentation());
+            }
+        }
+
+        // if setting to variable in memory
+        if (variableToOffset.containsKey(node.getRight().getSymbol().token().lexeme())) {
+            
+        }
+
+        // if setting to variable in registers
+        
         return 0;
     }
 
     public int instructionToMachineCode (Call node) {
+        int opCode;
+        switch (node.getFunctionName().token().lexeme()) {
+            case "readInt":
+                opCode = 56;
+                return DLX.assemble(opCode, node.getDest().getMachineCodeRepresentation());
+            case "readFloat":
+                opCode = 57;
+                return DLX.assemble(opCode, node.getDest().getMachineCodeRepresentation());
+            case "readBool":
+                opCode = 58;
+                return DLX.assemble(opCode, node.getDest().getMachineCodeRepresentation());
+            case "printInt":
+                opCode = 59;
+                // TODO: fix this to get register value
+                // return DLX.assemble(opCode, ((VariableReference) node.getArgs().getExpressionParameters().get(0)).g)
+            case "printFloat":
+                opCode = 60;
+                // TODO: fix this to get register value
+            case "printBool":
+                opCode = 61;
+            case "println":
+                opCode = 62;
+                return DLX.assemble(opCode);
+        }
+        
         return 0;
     }
 
