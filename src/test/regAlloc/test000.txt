@@ -1,11 +1,25 @@
 main
 
 int x, y, z;
+bool a;
+float d;
+
 
 // cp cf dce
 {
-    x = 51;
-    y = 2 * x + y;
-    x = x + y * 2 + z;
-    call printInt(y);
+    // block 0
+    x = 5; 
+    y = 10; 
+    x = 10;
+    y = x;
+    x = y;
+
+    if (x < 100) then
+        // block 1
+        z = 5;
+    fi;
+
+    // block 2
+    x = z;
+    call printInt(x);
 }.
