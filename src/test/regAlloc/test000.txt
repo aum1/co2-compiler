@@ -12,11 +12,14 @@ float d;
     y = 10; 
     x = 10;
     y = x;
+    x = 10000;
     x = y;
 
     if (x < 100) then
         // block 1
         z = 5;
+    else 
+        z = 4444;
     fi;
 
     // block 2
