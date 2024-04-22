@@ -347,9 +347,10 @@ public class CFGPrinter implements CFGVisitor {
 
     public static void LegiblePrint(TACList currInstructions) {
         // TACList currInstructions = block.getInstructions();
-        System.out.println("My instructions");
+        // System.out.println("My instructions:");
         for (int i = 0; i < currInstructions.getInstructions().size(); i++) {
             TAC instruction = currInstructions.getInstructions().get(i);
+            // System.out.println(instruction.getDest().getRegisterNumber());
             String destStringPredecessor = "";
             String leftStringPredecessor = "";
             String rightStringPredecessor = "";

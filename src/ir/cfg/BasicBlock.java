@@ -17,6 +17,7 @@ public class BasicBlock extends Block implements Iterable<TAC> {
     private Map<BasicBlock, String> successors;
     private HashMap<String, BasicBlock> functionsMap;
     private ArrayList<Integer> machineInstructions;
+    private int machineInstructionsStartingPosition;
 
     private static int nextBlockNumber = 0;
     private static int nextTemporaryNumber = 0;
@@ -26,6 +27,8 @@ public class BasicBlock extends Block implements Iterable<TAC> {
         this.instructions = instructions;
         this.predecessors = predecessors;
         this.successors = successors;
+        machineInstructions = new ArrayList<>();
+        machineInstructionsStartingPosition = 0;
         this.visited = false;
 
         if (this.predecessors == null) {
@@ -42,6 +45,8 @@ public class BasicBlock extends Block implements Iterable<TAC> {
         this.predecessors = predecessors;
         this.successors = successors;
         this.functionsMap = functionsMap;
+        machineInstructions = new ArrayList<>();
+        machineInstructionsStartingPosition = 0;
         this.visited = false;
 
         if (this.predecessors == null) {
@@ -74,6 +79,14 @@ public class BasicBlock extends Block implements Iterable<TAC> {
 
     public void removeMachineInstruction(int index) {
         this.machineInstructions.remove(index);
+    }
+
+    public void setMachineInstructionsStartingPosition(int newPos) {
+        this.machineInstructionsStartingPosition = newPos;
+    }
+
+    public int getMachineInstructionsStartingPosition() {
+        return machineInstructionsStartingPosition;
     }
 
     public void setInstructionList(TACList newInstructionList) {

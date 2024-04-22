@@ -10,6 +10,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -2387,10 +2388,8 @@ public class Compiler {
 
                 removedVertices.add(vertexToRemove);
                 vertices.remove(vertexToRemove);
-                // TODO: mark as possible spillages
             }
         }
-        // System.out.println("Done with initial removals");
 
         // retrieve the graph again, to get the edges to add
         Map<String, Set<String>> originalGraph = getVertexGraph();
@@ -2413,7 +2412,6 @@ public class Compiler {
                 // if we find a register number that does not align with all the edges
                 boolean foundRegisterValue = true;
                 for (int i = 0; i < originalGraph.get(poppedVertex).size(); i++) {
-                    // System.out.println("comparing " + registerNumber + ": " + poppedVertex + " to " + (String) originalGraph.get(poppedVertex).toArray()[i]);
                     if (variableRegisterMap.get((String) originalGraph.get(poppedVertex).toArray()[i]) == registerNumber) {
                         foundRegisterValue = false;
                     }
@@ -2421,7 +2419,6 @@ public class Compiler {
 
                 if (foundRegisterValue) {
                     variableRegisterMap.put(poppedVertex, registerNumber);
-                    // System.out.println("Assigned " + poppedVertex + "->" +  registerNumber);
                     break;
                 }
                 else {
@@ -2512,7 +2509,6 @@ public class Compiler {
     
             for (TAC instruction : currentBlock.getInstructions().getReversedInstructions()) {
                 if (localLiveVariables.contains(instruction.getDest())) {
-                    // TODO: when removing variables, still add edge from variable to other variables in the live variables
                     if (!vertices.containsKey(instruction.getDest().getSymbol().token().lexeme())) {
                         vertices.put(instruction.getDest().getSymbol().token().lexeme(), new HashSet<>());
                     }
@@ -2588,11 +2584,12 @@ public class Compiler {
     Map<String, Integer> variableRegisterMap = null;
 
     public int[] genCode() {
-        CFGPrinter.LegiblePrint(irHead);
+        // CFGPrinter.LegiblePrint(irHead);
     
         ArrayList<Integer> generatedCode = new ArrayList<>();
         Queue<BasicBlock> blockQueue = new ArrayDeque<>();
         Set<BasicBlock> visitedBlocks = new HashSet<>();
+        Map<Integer, TAC> branchInstructionPositions = new HashMap<>();
     
         // Initialize with the entry block
         blockQueue.add(irHead);
@@ -2605,23 +2602,41 @@ public class Compiler {
             if (!visitedBlocks.add(currentBlock)) {
                 continue;
             }
+            System.out.println("Block: " + currentBlock.getID());
+            CFGPrinter.LegiblePrint(currentBlock);
     
             // Generate machine code for each instruction in the current block
             for (TAC instruction : currentBlock.getInstructions()) {
-                ArrayList<Integer> instructionMachineCode = instructionToMachineCode(instruction);
+                // track all branch instructions and dont add yet
+                if (instruction instanceof BRA || instruction instanceof BLT) {
+                    branchInstructionPositions.put(generatedCode.size(), instruction);
+                    continue;
+                }
+
+                ArrayList<Integer> instructionMachineCode = instructionToMachineCode(instruction, generatedCode.size());
                 for (Integer code : instructionMachineCode) {
-                    generatedCode.add(code);
                     currentBlock.addMachineInstruction(code); // Add to BasicBlock's machineInstructions
+                    generatedCode.add(code);
                 }
             }
-    
+
+            // add each block, and mark where the starting position is
+            currentBlock.setMachineInstructionsStartingPosition(generatedCode.size());            
+
             // Enqueue successors to be processed
             currentBlock.getSuccessors().keySet().forEach(blockQueue::add);
     
             // Handle special cases such as branches within the currentBlock if necessary
             // Possible TODO: Enhance block-specific processing
         }
-    
+
+
+        // traverse through branch instructions now that blocks have a starting position
+        for (Integer currPosition : branchInstructionPositions.keySet()) {
+            ArrayList<Integer> currentBranchedCode = instructionToMachineCode(branchInstructionPositions.get(currPosition), currPosition);
+            generatedCode.addAll(currPosition, currentBranchedCode);
+        }
+
         // Add RET 0 instruction to signify end of program
         int ret0 = DLX.assemble(55, 0);
         generatedCode.add(ret0);
@@ -2635,8 +2650,7 @@ public class Compiler {
         return generatedCodeArray;
     }
     
-
-    public ArrayList<Integer> instructionToMachineCode(TAC instruction) {
+    public ArrayList<Integer> instructionToMachineCode(TAC instruction, int instructionPosition) {
         ArrayList<Integer> toReturn = new ArrayList<>();
         if (instruction instanceof Add) {
             toReturn.add(instructionToMachineCode((Add) (instruction)));
@@ -2663,25 +2677,26 @@ public class Compiler {
             toReturn.add(instructionToMachineCode((Or) (instruction)));
         }
         if (instruction instanceof BEQ) {
-            toReturn.add(instructionToMachineCode((BEQ) (instruction)));
+            toReturn.add(instructionToMachineCode((BEQ) (instruction), instructionPosition));
         }
         if (instruction instanceof BNE) {
-            toReturn.add(instructionToMachineCode((BNE) (instruction)));
+            toReturn.add(instructionToMachineCode((BNE) (instruction), instructionPosition));
         }
         if (instruction instanceof BLT) {
-            toReturn.add(instructionToMachineCode((BLT) (instruction)));
+            ArrayList<Integer> retArrayList = instructionToMachineCode((BLT) (instruction), instructionPosition);
+            return retArrayList;
         }
         if (instruction instanceof BGE) {
-            toReturn.add(instructionToMachineCode((BGE) (instruction)));
+            toReturn.add(instructionToMachineCode((BGE) (instruction), instructionPosition));
         }
         if (instruction instanceof BLE) {
-            toReturn.add(instructionToMachineCode((BLE) (instruction)));
+            toReturn.add(instructionToMachineCode((BLE) (instruction), instructionPosition));
         }
         if (instruction instanceof BGT) {
-            toReturn.add(instructionToMachineCode((BLE) (instruction)));
+            toReturn.add(instructionToMachineCode((BGT) (instruction), instructionPosition));
         }
         if (instruction instanceof BRA) {
-            toReturn.add(instructionToMachineCode((BRA) (instruction)));
+            toReturn.add(instructionToMachineCode((BRA) (instruction), instructionPosition));
         }
         if (instruction instanceof Comparison) {
             toReturn.add(instructionToMachineCode((Comparison) (instruction)));
@@ -2852,49 +2867,57 @@ public class Compiler {
         return DLX.assemble(opCode, a, b, c);
     }
     
-    public int instructionToMachineCode (BEQ node) {
+    public int instructionToMachineCode (BEQ node, int instructionPosition) {
         int opCode = 47;
         int a = node.getLeft().getMachineCodeRepresentation();
         int c = node.getTrueBasicBlock().getID(); // TODO: figure out how to reference branch location
         return DLX.assemble(opCode, a, c);
     }
     
-    public int instructionToMachineCode (BNE node) {
+    public int instructionToMachineCode (BNE node, int instructionPosition) {
         int opCode = 48;
         int a = node.getLeft().getMachineCodeRepresentation();
         int c = node.getTrueBasicBlock().getID(); // TODO: figure out how to reference branch location
         return DLX.assemble(opCode, a, c);
     }
 
-    public int instructionToMachineCode (BLT node) {
+    public ArrayList<Integer> instructionToMachineCode (BLT node, int instructionPosition) {
+        ArrayList<Integer> toReturn = new ArrayList<>();
         int opCode = 49;
         int a = node.getLeft().getMachineCodeRepresentation();
-        int c = node.getTrueBasicBlock().getID(); // TODO: figure out how to reference branch location
-        return DLX.assemble(opCode, a, c);
+        // System.out.println("true: "+ node.getTrueBasicBlock().getID() + " " + node.getTrueBasicBlock().getMachineInstructionsStartingPosition());
+        // System.out.println("instruction position: " + instructionPosition);
+        // int c = node.getTrueBasicBlock().getMachineInstructionsStartingPosition() - instructionPosition;
+        int c = node.getFalseBasicBlock().getMachineInstructionsStartingPosition() - instructionPosition;
+        int d = node.getTrueBasicBlock().getMachineInstructionsStartingPosition() - instructionPosition;
+        toReturn.add(DLX.assemble(opCode, a, c));
+        toReturn.add(DLX.assemble(47, 0, d));
+
+        return toReturn;
     }
 
-    public int instructionToMachineCode (BGE node) {
+    public int instructionToMachineCode (BGE node, int instructionPosition) {
         int opCode = 50;
         int a = node.getLeft().getMachineCodeRepresentation();
         int c = node.getTrueBasicBlock().getID(); // TODO: figure out how to reference branch location
         return DLX.assemble(opCode, a, c);
     }
 
-    public int instructionToMachineCode (BLE node) {
+    public int instructionToMachineCode (BLE node, int instructionPosition) {
         int opCode = 51;
         int a = node.getLeft().getMachineCodeRepresentation();
         int c = node.getTrueBasicBlock().getID(); // TODO: figure out how to reference branch location
         return DLX.assemble(opCode, a, c);
     }
 
-    public int instructionToMachineCode (BGT node) {
+    public int instructionToMachineCode (BGT node, int instructionPosition) {
         int opCode = 52;
         int a = node.getLeft().getMachineCodeRepresentation();
         int c = node.getTrueBasicBlock().getID(); // TODO: figure out how to reference branch location
         return DLX.assemble(opCode, a, c);
     }
 
-    public int instructionToMachineCode (BRA node) {
+    public int instructionToMachineCode (BRA node, int instructionPosition) {
         int opCode = 47;
         int a = 0; // branch if register 0 == 0, but r0 always holds the value 0
         int c = node.getTrueBasicBlock().getID(); // TODO: figure out how to reference branch location
@@ -2922,29 +2945,35 @@ public class Compiler {
     }
     
     public int instructionToMachineCode (Assign node) {
-        // if setting to constant
         if (node.getRight() instanceof Literal) {
-            if (((Literal) node.getRight()).isBool()) {
+            if ((node.getRight()).isBool()) {
                 // if a boolean, add an or with the value 0 and the 
                 return DLX.assemble(33, node.getDest().getMachineCodeRepresentation(), 0, node.getRight().getMachineCodeRepresentation());
             }
-            else if (((Literal) node.getRight()).isFloat()) {
+            else if ((node.getRight()).isFloat()) {
                 // float add with the value 0
                 return DLX.assemble(27, node.getDest().getMachineCodeRepresentation(), 0, node.getRight().getMachineCodeRepresentation());
             }
-            else if (((Literal) node.getRight()).isInt()) {
+            else if ((node.getRight()).isInt()) {
                 // int add with the value 0
                 return DLX.assemble(20, node.getDest().getMachineCodeRepresentation(), 0, node.getRight().getMachineCodeRepresentation());
+            }   
+        }
+        else {
+            if ((node.getRight()).isBool()) {
+                // if a boolean, add an or with the value 0 and the 
+                return DLX.assemble(13, node.getDest().getMachineCodeRepresentation(), 0, node.getRight().getMachineCodeRepresentation());
             }
-        }
+            else if ((node.getRight()).isFloat()) {
+                // float add with the value 0
+                return DLX.assemble(7, node.getDest().getMachineCodeRepresentation(), 0, node.getRight().getMachineCodeRepresentation());
+            }
+            else if ((node.getRight()).isInt()) {
+                // int add with the value 0
+                return DLX.assemble(0, node.getDest().getMachineCodeRepresentation(), 0, node.getRight().getMachineCodeRepresentation());
+            }  
+        } 
 
-        // if setting to variable in memory
-        if (variableToOffset.containsKey(node.getRight().getSymbol().token().lexeme())) {
-            
-        }
-
-        // if setting to variable in registers
-        
         return 0;
     }
 
