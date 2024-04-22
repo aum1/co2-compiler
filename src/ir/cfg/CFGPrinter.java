@@ -139,10 +139,8 @@ public class CFGPrinter implements CFGVisitor {
                     if (!(transitionStrings.contains(currTransition))) {
                         toReturn += currTransition;
                         transitionStrings.add(currTransition);
-                    }
-                    
+                    }   
                 }
-                
             }
         }
 
@@ -346,11 +344,8 @@ public class CFGPrinter implements CFGVisitor {
     }
 
     public static void LegiblePrint(TACList currInstructions) {
-        // TACList currInstructions = block.getInstructions();
-        // System.out.println("My instructions:");
         for (int i = 0; i < currInstructions.getInstructions().size(); i++) {
             TAC instruction = currInstructions.getInstructions().get(i);
-            // System.out.println(instruction.getDest().getRegisterNumber());
             String destStringPredecessor = "";
             String leftStringPredecessor = "";
             String rightStringPredecessor = "";
@@ -452,10 +447,6 @@ public class CFGPrinter implements CFGVisitor {
                 }
                 System.out.println(((Mod) instruction).getID() + ":" + destStringPredecessor + ((Mod) instruction).getDest().getMachineCodeRepresentation() + " = " + rightStringPredecessor + ((Mod) instruction).getLeft().getMachineCodeRepresentation() + " % " + leftStringPredecessor + ((Mod) instruction).getRight().getMachineCodeRepresentation());
             }
-
-            // if (instruction.getDest() != null) {
-            //     System.out.println("set dest: " + instruction.getDest().isBool() + " " + instruction.getDest().isFloat() + " " + instruction.getDest().isInt());
-            // }
         }
     }
 }

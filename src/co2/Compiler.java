@@ -2630,11 +2630,13 @@ public class Compiler {
             // Possible TODO: Enhance block-specific processing
         }
 
-
         // traverse through branch instructions now that blocks have a starting position
+        int count = 0;
         for (Integer currPosition : branchInstructionPositions.keySet()) {
+            System.out.println("Currposition: " + currPosition);
             ArrayList<Integer> currentBranchedCode = instructionToMachineCode(branchInstructionPositions.get(currPosition), currPosition);
-            generatedCode.addAll(currPosition, currentBranchedCode);
+            generatedCode.addAll(currPosition + count, currentBranchedCode);
+            count += currentBranchedCode.size();
         }
 
         // Add RET 0 instruction to signify end of program
@@ -2677,26 +2679,32 @@ public class Compiler {
             toReturn.add(instructionToMachineCode((Or) (instruction)));
         }
         if (instruction instanceof BEQ) {
-            toReturn.add(instructionToMachineCode((BEQ) (instruction), instructionPosition));
+            ArrayList<Integer> retArrayList = instructionToMachineCode((BEQ) (instruction), instructionPosition);
+            return retArrayList;
         }
         if (instruction instanceof BNE) {
-            toReturn.add(instructionToMachineCode((BNE) (instruction), instructionPosition));
+            ArrayList<Integer> retArrayList = instructionToMachineCode((BNE) (instruction), instructionPosition);
+            return retArrayList;
         }
         if (instruction instanceof BLT) {
             ArrayList<Integer> retArrayList = instructionToMachineCode((BLT) (instruction), instructionPosition);
             return retArrayList;
         }
         if (instruction instanceof BGE) {
-            toReturn.add(instructionToMachineCode((BGE) (instruction), instructionPosition));
+            ArrayList<Integer> retArrayList = instructionToMachineCode((BGE) (instruction), instructionPosition);
+            return retArrayList;
         }
         if (instruction instanceof BLE) {
-            toReturn.add(instructionToMachineCode((BLE) (instruction), instructionPosition));
+            ArrayList<Integer> retArrayList = instructionToMachineCode((BLE) (instruction), instructionPosition);
+            return retArrayList;
         }
         if (instruction instanceof BGT) {
-            toReturn.add(instructionToMachineCode((BGT) (instruction), instructionPosition));
+            ArrayList<Integer> retArrayList = instructionToMachineCode((BGT) (instruction), instructionPosition);
+            return retArrayList;
         }
         if (instruction instanceof BRA) {
-            toReturn.add(instructionToMachineCode((BRA) (instruction), instructionPosition));
+            ArrayList<Integer> retArrayList = instructionToMachineCode((BRA) (instruction), instructionPosition);
+            return retArrayList;
         }
         if (instruction instanceof Comparison) {
             toReturn.add(instructionToMachineCode((Comparison) (instruction)));
@@ -2867,61 +2875,119 @@ public class Compiler {
         return DLX.assemble(opCode, a, b, c);
     }
     
-    public int instructionToMachineCode (BEQ node, int instructionPosition) {
+    public ArrayList<Integer> instructionToMachineCode (BEQ node, int instructionPosition) {
+        ArrayList<Integer> toReturn = new ArrayList<>();
         int opCode = 47;
         int a = node.getLeft().getMachineCodeRepresentation();
-        int c = node.getTrueBasicBlock().getID(); // TODO: figure out how to reference branch location
-        return DLX.assemble(opCode, a, c);
+        int c = node.getTrueBasicBlock().getMachineInstructionsStartingPosition() - instructionPosition;
+
+        if (node.getFalseBasicBlock() == null) {
+            toReturn.add(DLX.assemble(opCode, a, c));
+        }
+        else {
+            int d = node.getFalseBasicBlock().getMachineInstructionsStartingPosition() - instructionPosition;
+            toReturn.add(DLX.assemble(opCode, a, c));
+            toReturn.add(DLX.assemble(48, 0, d));
+        }
+
+        return toReturn;
     }
     
-    public int instructionToMachineCode (BNE node, int instructionPosition) {
+    public ArrayList<Integer> instructionToMachineCode (BNE node, int instructionPosition) {
+        ArrayList<Integer> toReturn = new ArrayList<>();
         int opCode = 48;
         int a = node.getLeft().getMachineCodeRepresentation();
-        int c = node.getTrueBasicBlock().getID(); // TODO: figure out how to reference branch location
-        return DLX.assemble(opCode, a, c);
+        int c = node.getTrueBasicBlock().getMachineInstructionsStartingPosition() - instructionPosition;
+
+        if (node.getFalseBasicBlock() == null) {
+            toReturn.add(DLX.assemble(opCode, a, c-1));
+        }
+        else {
+            int d = node.getFalseBasicBlock().getMachineInstructionsStartingPosition() - instructionPosition;
+            toReturn.add(DLX.assemble(opCode, a, c));
+            toReturn.add(DLX.assemble(47, 0, d));
+        }
+
+        return toReturn;
     }
 
     public ArrayList<Integer> instructionToMachineCode (BLT node, int instructionPosition) {
         ArrayList<Integer> toReturn = new ArrayList<>();
         int opCode = 49;
         int a = node.getLeft().getMachineCodeRepresentation();
-        // System.out.println("true: "+ node.getTrueBasicBlock().getID() + " " + node.getTrueBasicBlock().getMachineInstructionsStartingPosition());
-        // System.out.println("instruction position: " + instructionPosition);
-        // int c = node.getTrueBasicBlock().getMachineInstructionsStartingPosition() - instructionPosition;
-        int c = node.getFalseBasicBlock().getMachineInstructionsStartingPosition() - instructionPosition;
-        int d = node.getTrueBasicBlock().getMachineInstructionsStartingPosition() - instructionPosition;
-        toReturn.add(DLX.assemble(opCode, a, c));
-        toReturn.add(DLX.assemble(47, 0, d));
+        int c = node.getTrueBasicBlock().getMachineInstructionsStartingPosition() - instructionPosition;
+
+        if (node.getFalseBasicBlock() == null) {
+            toReturn.add(DLX.assemble(opCode, a, c));
+        }
+        else {
+            int d = node.getFalseBasicBlock().getMachineInstructionsStartingPosition() - instructionPosition;
+            toReturn.add(DLX.assemble(opCode, a, c));
+            toReturn.add(DLX.assemble(50, 0, d));
+        }
 
         return toReturn;
     }
 
-    public int instructionToMachineCode (BGE node, int instructionPosition) {
+    public ArrayList<Integer> instructionToMachineCode (BGE node, int instructionPosition) {
+        ArrayList<Integer> toReturn = new ArrayList<>();
         int opCode = 50;
         int a = node.getLeft().getMachineCodeRepresentation();
-        int c = node.getTrueBasicBlock().getID(); // TODO: figure out how to reference branch location
-        return DLX.assemble(opCode, a, c);
+        int c = node.getTrueBasicBlock().getMachineInstructionsStartingPosition() - instructionPosition;
+
+        if (node.getFalseBasicBlock() == null) {
+            toReturn.add(DLX.assemble(opCode, a, c));
+        }
+        else {
+            int d = node.getFalseBasicBlock().getMachineInstructionsStartingPosition() - instructionPosition;
+            toReturn.add(DLX.assemble(opCode, a, c));
+            toReturn.add(DLX.assemble(49, 0, d));
+        }
+        return toReturn;
     }
 
-    public int instructionToMachineCode (BLE node, int instructionPosition) {
+    public ArrayList<Integer> instructionToMachineCode (BLE node, int instructionPosition) {
+        ArrayList<Integer> toReturn = new ArrayList<>();
         int opCode = 51;
         int a = node.getLeft().getMachineCodeRepresentation();
-        int c = node.getTrueBasicBlock().getID(); // TODO: figure out how to reference branch location
-        return DLX.assemble(opCode, a, c);
+        int c = node.getTrueBasicBlock().getMachineInstructionsStartingPosition() - instructionPosition;
+
+        if (node.getFalseBasicBlock() == null) {
+            toReturn.add(DLX.assemble(opCode, a, c));
+        }
+        else {
+            int d = node.getFalseBasicBlock().getMachineInstructionsStartingPosition() - instructionPosition;
+            toReturn.add(DLX.assemble(opCode, a, c));
+            toReturn.add(DLX.assemble(52, 0, d));
+        }
+        
+        return toReturn;
     }
 
-    public int instructionToMachineCode (BGT node, int instructionPosition) {
+    public ArrayList<Integer> instructionToMachineCode (BGT node, int instructionPosition) {
+        ArrayList<Integer> toReturn = new ArrayList<>();
         int opCode = 52;
         int a = node.getLeft().getMachineCodeRepresentation();
-        int c = node.getTrueBasicBlock().getID(); // TODO: figure out how to reference branch location
-        return DLX.assemble(opCode, a, c);
+        int c = node.getTrueBasicBlock().getMachineInstructionsStartingPosition() - instructionPosition;
+
+        if (node.getFalseBasicBlock() == null) {
+            toReturn.add(DLX.assemble(opCode, a, c));
+        }
+        else {
+            int d = node.getFalseBasicBlock().getMachineInstructionsStartingPosition() - instructionPosition;
+            toReturn.add(DLX.assemble(opCode, a, c));
+            toReturn.add(DLX.assemble(51, 0, d));
+        }
+        return toReturn;
     }
 
-    public int instructionToMachineCode (BRA node, int instructionPosition) {
+    public ArrayList<Integer> instructionToMachineCode (BRA node, int instructionPosition) {
+        ArrayList<Integer> toReturn = new ArrayList<>();
         int opCode = 47;
         int a = 0; // branch if register 0 == 0, but r0 always holds the value 0
-        int c = node.getTrueBasicBlock().getID(); // TODO: figure out how to reference branch location
-        return DLX.assemble(opCode, a, c);
+        int c = node.getTrueBasicBlock().getMachineInstructionsStartingPosition() - instructionPosition;
+        toReturn.add(DLX.assemble(opCode, a, c-1));
+        return toReturn;
     }
 
     public int instructionToMachineCode (Comparison instruction) {

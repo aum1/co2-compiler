@@ -164,11 +164,14 @@ public class IRGenerator {
         BasicBlock blockAfterIf = new BasicBlock(BasicBlock.getNextBlockNumber(), new TACList(), null, null);
         BasicBlock elseBlock = null;
 
+        currentInstructionList.addInstruction(new BRA(TACList.getNextTACNumber(), blockAfterIf));
+
         // if else block, then get list of else instructions
         if (node.hasElseBlock()) {
             TACList elseList = new TACList();
             currentInstructionList = elseList;
             visit(node.getElseBlock());
+            currentInstructionList.addInstruction(new BRA(TACList.getNextTACNumber(), blockAfterIf));
             isFirstBlock = false;
 
             elseBlock = new BasicBlock(BasicBlock.getNextBlockNumber(), elseList, null, null);
