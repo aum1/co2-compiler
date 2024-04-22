@@ -2589,30 +2589,52 @@ public class Compiler {
 
     public int[] genCode() {
         CFGPrinter.LegiblePrint(irHead);
-        
+    
         ArrayList<Integer> generatedCode = new ArrayList<>();
-
-        // start with computation block and traverse
-        for (TAC currentInstruction : this.irHead.getInstructions()) {
-            ArrayList<Integer> instructionMachineCode = instructionToMachineCode(currentInstruction);
-            for (Integer i : instructionMachineCode) {
-                generatedCode.add(i);
+        Queue<BasicBlock> blockQueue = new ArrayDeque<>();
+        Set<BasicBlock> visitedBlocks = new HashSet<>();
+    
+        // Initialize with the entry block
+        blockQueue.add(irHead);
+    
+        // Process each block in the CFG
+        while (!blockQueue.isEmpty()) {
+            BasicBlock currentBlock = blockQueue.poll();
+    
+            // Skip blocks that have been processed to avoid loops
+            if (!visitedBlocks.add(currentBlock)) {
+                continue;
             }
-            // TODO: handle case for branch statements
+    
+            // Generate machine code for each instruction in the current block
+            for (TAC instruction : currentBlock.getInstructions()) {
+                ArrayList<Integer> instructionMachineCode = instructionToMachineCode(instruction);
+                for (Integer code : instructionMachineCode) {
+                    generatedCode.add(code);
+                    currentBlock.addMachineInstruction(code); // Add to BasicBlock's machineInstructions
+                }
+            }
+    
+            // Enqueue successors to be processed
+            currentBlock.getSuccessors().keySet().forEach(blockQueue::add);
+    
+            // Handle special cases such as branches within the currentBlock if necessary
+            // Possible TODO: Enhance block-specific processing
         }
-
-
-        // add RET 0 instruction to show end of program
+    
+        // Add RET 0 instruction to signify end of program
         int ret0 = DLX.assemble(55, 0);
         generatedCode.add(ret0);
-
-        // convert array list to array and return
+    
+        // Convert ArrayList to array and return
         int[] generatedCodeArray = new int[generatedCode.size()];
         for (int i = 0; i < generatedCode.size(); i++) {
             generatedCodeArray[i] = generatedCode.get(i);
         }
+    
         return generatedCodeArray;
     }
+    
 
     public ArrayList<Integer> instructionToMachineCode(TAC instruction) {
         ArrayList<Integer> toReturn = new ArrayList<>();
