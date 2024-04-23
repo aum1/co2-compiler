@@ -2474,7 +2474,7 @@ public class Compiler {
         if (variableRegisterMap.containsKey(lexeme)) {
             int registerNumber = variableRegisterMap.get(lexeme);
             variable.setRegisterNumber(registerNumber);
-            System.out.println("Assigned register " + registerNumber + " to variable " + lexeme);
+            // System.out.println("Assigned register " + registerNumber + " to variable " + lexeme);
         }
     }
 
@@ -2549,7 +2549,7 @@ public class Compiler {
         }
 
         // Optional: Print or otherwise use the vertices map
-        printOutVariableGraph(vertices);
+        // printOutVariableGraph(vertices);
         return vertices;
         }
     
@@ -2604,7 +2604,7 @@ public class Compiler {
             // Generate machine code for each instruction in the current block
             for (TAC instruction : currentBlock.getInstructions()) {
                 // track all branch instructions and dont add yet
-                if (instruction instanceof BRA || instruction instanceof BLT || instruction instanceof BNE || instruction instanceof BEQ || instruction instanceof BGE || instruction instanceof BGT) {
+                if (instruction instanceof Call || instruction instanceof BRA || instruction instanceof BLT || instruction instanceof BNE || instruction instanceof BEQ || instruction instanceof BGE || instruction instanceof BGT) {
                     branchInstructionPositions.put(generatedCode.size(), instruction);
                     continue;
                 }
@@ -3110,9 +3110,7 @@ public class Compiler {
                 opCode = 53;
                 toReturn.add(DLX.assemble(opCode, node.getDestinationBlock().getMachineInstructionsStartingPosition()));
                 return toReturn;
-
-        }
-        
+        }   
     }
 
     public ArrayList<Integer> instructionToMachineCode (Return node) {
@@ -3129,6 +3127,7 @@ public class Compiler {
             }
         }
         
+        // toReturn.add(DLX.assemble(59, 31));
         toReturn.add(DLX.assemble(55, 31));
         return toReturn;
     }
