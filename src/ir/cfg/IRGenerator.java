@@ -235,7 +235,7 @@ public class IRGenerator {
 
         TACList relationList = new TACList();
         currentInstructionList = relationList;
-        visit(node.getRelation());
+        Symbol relationSymbol = visit(node.getRelation());
 
         // get then list of then instructions
         TACList innerStatSeq = new TACList();
@@ -253,7 +253,7 @@ public class IRGenerator {
         previousBlock.addSuccessor(relationBlock, "while condition");
         relationBlock.addSuccessor(statSeqBlock, "Branch inside while loop");
         relationBlock.addSuccessor(blockAfterWhile, "Fall through");
-        statSeqBlock.addSuccessor(blockAfterWhile);
+        // statSeqBlock.addSuccessor(blockAfterWhile);
         statSeqBlock.addSuccessor(relationBlock, "Loop condition");
 
         relationBlock.addPredecessor(previousBlock);
@@ -263,6 +263,36 @@ public class IRGenerator {
         statSeqBlock.addPredecessor(statSeqBlock);
         relationBlock.addPredecessor(statSeqBlock);
         
+        if (relationSymbol != null) {
+            if (relationSymbol.token().lexeme().equals("==")) {
+                relationBlock.addInstruction(new BEQ(TACList.getNextTACNumber(), relationBlock.getInstructions().getLatestVariable(), statSeqBlock, blockAfterWhile));
+            }
+            if (relationSymbol.token().lexeme().equals("!=")) {
+                relationBlock.addInstruction(new BNE(TACList.getNextTACNumber(), relationBlock.getInstructions().getLatestVariable(), statSeqBlock, blockAfterWhile));
+            }
+            if (relationSymbol.token().lexeme().equals("<")) {
+                relationBlock.addInstruction(new BLT(TACList.getNextTACNumber(), relationBlock.getInstructions().getLatestVariable(), statSeqBlock, blockAfterWhile));
+            }
+            if (relationSymbol.token().lexeme().equals("<=")) {
+                relationBlock.addInstruction(new BLE(TACList.getNextTACNumber(), relationBlock.getInstructions().getLatestVariable(), statSeqBlock, blockAfterWhile));
+            }
+            if (relationSymbol.token().lexeme().equals(">")) {
+                relationBlock.addInstruction(new BGT(TACList.getNextTACNumber(), relationBlock.getInstructions().getLatestVariable(), statSeqBlock, blockAfterWhile));
+            }
+            if (relationSymbol.token().lexeme().equals(">=")) {
+                relationBlock.addInstruction(new BGE(TACList.getNextTACNumber(), relationBlock.getInstructions().getLatestVariable(), statSeqBlock, blockAfterWhile));
+            }
+        }
+        else if (node.getRelation() instanceof BoolLiteral) {
+            if (((BoolLiteral) node.getRelation()).getBoolean().token().lexeme().equals("true")) {
+                relationBlock.addInstruction(new BRA(TACList.getNextTACNumber(), statSeqBlock));
+            }
+            if (((BoolLiteral) node.getRelation()).getBoolean().token().lexeme().equals("false")) {
+                relationBlock.addInstruction(new BRA(TACList.getNextTACNumber(), blockAfterWhile));
+            }
+        }
+
+        statSeqBlock.addInstruction(new BRA(TACList.getNextTACNumber(), relationBlock));
         
         previousBlock = blockAfterWhile;
         currentInstructionList = blockAfterWhile.getInstructions();

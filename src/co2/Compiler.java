@@ -2597,46 +2597,42 @@ public class Compiler {
         // Process each block in the CFG
         while (!blockQueue.isEmpty()) {
             BasicBlock currentBlock = blockQueue.poll();
+            // CFGPrinter.LegiblePrint(currentBlock);
     
             // Skip blocks that have been processed to avoid loops
             if (!visitedBlocks.add(currentBlock)) {
                 continue;
             }
-            System.out.println("Block: " + currentBlock.getID());
-            CFGPrinter.LegiblePrint(currentBlock);
+            
+            currentBlock.setMachineInstructionsStartingPosition(generatedCode.size());
     
             // Generate machine code for each instruction in the current block
             for (TAC instruction : currentBlock.getInstructions()) {
                 // track all branch instructions and dont add yet
-                if (instruction instanceof BRA || instruction instanceof BLT) {
+                if (instruction instanceof BRA || instruction instanceof BLT || instruction instanceof BNE || instruction instanceof BEQ || instruction instanceof BGE || instruction instanceof BGT) {
                     branchInstructionPositions.put(generatedCode.size(), instruction);
                     continue;
                 }
 
-                ArrayList<Integer> instructionMachineCode = instructionToMachineCode(instruction, generatedCode.size());
+                ArrayList<Integer> instructionMachineCode = instructionToMachineCode(instruction, generatedCode.size(), 0);
                 for (Integer code : instructionMachineCode) {
                     currentBlock.addMachineInstruction(code); // Add to BasicBlock's machineInstructions
                     generatedCode.add(code);
                 }
             }
-
-            // add each block, and mark where the starting position is
-            currentBlock.setMachineInstructionsStartingPosition(generatedCode.size());            
-
+            
             // Enqueue successors to be processed
             currentBlock.getSuccessors().keySet().forEach(blockQueue::add);
-    
-            // Handle special cases such as branches within the currentBlock if necessary
-            // Possible TODO: Enhance block-specific processing
         }
 
         // traverse through branch instructions now that blocks have a starting position
         int count = 0;
         for (Integer currPosition : branchInstructionPositions.keySet()) {
-            System.out.println("Currposition: " + currPosition);
-            ArrayList<Integer> currentBranchedCode = instructionToMachineCode(branchInstructionPositions.get(currPosition), currPosition);
-            generatedCode.addAll(currPosition + count, currentBranchedCode);
-            count += currentBranchedCode.size();
+            ArrayList<Integer> currentBranchedCode = instructionToMachineCode(branchInstructionPositions.get(currPosition), currPosition, count);
+            for (Integer currCode : currentBranchedCode) {
+                generatedCode.add(currPosition.intValue() + count, currCode);
+                count++;
+            }
         }
 
         // Add RET 0 instruction to signify end of program
@@ -2652,7 +2648,7 @@ public class Compiler {
         return generatedCodeArray;
     }
     
-    public ArrayList<Integer> instructionToMachineCode(TAC instruction, int instructionPosition) {
+    public ArrayList<Integer> instructionToMachineCode(TAC instruction, int instructionPosition, int offset) {
         ArrayList<Integer> toReturn = new ArrayList<>();
         if (instruction instanceof Add) {
             toReturn.add(instructionToMachineCode((Add) (instruction)));
@@ -2679,31 +2675,31 @@ public class Compiler {
             toReturn.add(instructionToMachineCode((Or) (instruction)));
         }
         if (instruction instanceof BEQ) {
-            ArrayList<Integer> retArrayList = instructionToMachineCode((BEQ) (instruction), instructionPosition);
+            ArrayList<Integer> retArrayList = instructionToMachineCode((BEQ) (instruction), instructionPosition, offset);
             return retArrayList;
         }
         if (instruction instanceof BNE) {
-            ArrayList<Integer> retArrayList = instructionToMachineCode((BNE) (instruction), instructionPosition);
+            ArrayList<Integer> retArrayList = instructionToMachineCode((BNE) (instruction), instructionPosition, offset);
             return retArrayList;
         }
         if (instruction instanceof BLT) {
-            ArrayList<Integer> retArrayList = instructionToMachineCode((BLT) (instruction), instructionPosition);
+            ArrayList<Integer> retArrayList = instructionToMachineCode((BLT) (instruction), instructionPosition, offset);
             return retArrayList;
         }
         if (instruction instanceof BGE) {
-            ArrayList<Integer> retArrayList = instructionToMachineCode((BGE) (instruction), instructionPosition);
+            ArrayList<Integer> retArrayList = instructionToMachineCode((BGE) (instruction), instructionPosition, offset);
             return retArrayList;
         }
         if (instruction instanceof BLE) {
-            ArrayList<Integer> retArrayList = instructionToMachineCode((BLE) (instruction), instructionPosition);
+            ArrayList<Integer> retArrayList = instructionToMachineCode((BLE) (instruction), instructionPosition, offset);
             return retArrayList;
         }
         if (instruction instanceof BGT) {
-            ArrayList<Integer> retArrayList = instructionToMachineCode((BGT) (instruction), instructionPosition);
+            ArrayList<Integer> retArrayList = instructionToMachineCode((BGT) (instruction), instructionPosition, offset);
             return retArrayList;
         }
         if (instruction instanceof BRA) {
-            ArrayList<Integer> retArrayList = instructionToMachineCode((BRA) (instruction), instructionPosition);
+            ArrayList<Integer> retArrayList = instructionToMachineCode((BRA) (instruction), instructionPosition, offset);
             return retArrayList;
         }
         if (instruction instanceof Comparison) {
@@ -2754,7 +2750,8 @@ public class Compiler {
         c = instruction.getRight().getMachineCodeRepresentation();
     
         if (instruction.getRight().isFloat() && instruction.getRight() instanceof Literal) {
-            opCode = 28; }
+            opCode = 28; 
+        }
         else if (instruction.getRight().isFloat()) {
             opCode = 8; 
         }
@@ -2875,118 +2872,156 @@ public class Compiler {
         return DLX.assemble(opCode, a, b, c);
     }
     
-    public ArrayList<Integer> instructionToMachineCode (BEQ node, int instructionPosition) {
+    public ArrayList<Integer> instructionToMachineCode (BEQ node, int instructionPosition, int offset) {
         ArrayList<Integer> toReturn = new ArrayList<>();
         int opCode = 47;
         int a = node.getLeft().getMachineCodeRepresentation();
         int c = node.getTrueBasicBlock().getMachineInstructionsStartingPosition() - instructionPosition;
+        System.out.println("Generated BEQ jump from " + instructionPosition + "->" + node.getTrueBasicBlock().getMachineInstructionsStartingPosition());
 
         if (node.getFalseBasicBlock() == null) {
-            toReturn.add(DLX.assemble(opCode, a, c));
+            int cOffset = (c < 0) ? -1 : 1;
+            toReturn.add(DLX.assemble(opCode, a, c + cOffset));
         }
         else {
             int d = node.getFalseBasicBlock().getMachineInstructionsStartingPosition() - instructionPosition;
-            toReturn.add(DLX.assemble(opCode, a, c));
-            toReturn.add(DLX.assemble(48, 0, d));
+
+            int cOffset = (c < 0) ? -2 : 2;
+            int dOffset = (c < 0) ? -2 : 2;
+            
+            toReturn.add(DLX.assemble(opCode, a, c + cOffset));
+            toReturn.add(DLX.assemble(48, 0, d + dOffset));
         }
 
         return toReturn;
     }
     
-    public ArrayList<Integer> instructionToMachineCode (BNE node, int instructionPosition) {
+    public ArrayList<Integer> instructionToMachineCode (BNE node, int instructionPosition, int offset) {
         ArrayList<Integer> toReturn = new ArrayList<>();
         int opCode = 48;
         int a = node.getLeft().getMachineCodeRepresentation();
         int c = node.getTrueBasicBlock().getMachineInstructionsStartingPosition() - instructionPosition;
+        System.out.println("Generated BNE jump from " + instructionPosition + "->" + node.getTrueBasicBlock().getMachineInstructionsStartingPosition());
 
         if (node.getFalseBasicBlock() == null) {
-            toReturn.add(DLX.assemble(opCode, a, c-1));
+            int cOffset = (c < 0) ? -1 : 1;
+            toReturn.add(DLX.assemble(opCode, a, c + cOffset));
         }
         else {
             int d = node.getFalseBasicBlock().getMachineInstructionsStartingPosition() - instructionPosition;
-            toReturn.add(DLX.assemble(opCode, a, c));
-            toReturn.add(DLX.assemble(47, 0, d));
+
+            int cOffset = (c < 0) ? -2 : 2;
+            int dOffset = (c < 0) ? -2 : 2;
+
+            toReturn.add(DLX.assemble(opCode, a, c + cOffset));
+            toReturn.add(DLX.assemble(47, 0, d + dOffset));
         }
 
         return toReturn;
     }
 
-    public ArrayList<Integer> instructionToMachineCode (BLT node, int instructionPosition) {
+    public ArrayList<Integer> instructionToMachineCode (BLT node, int instructionPosition, int offset) {
         ArrayList<Integer> toReturn = new ArrayList<>();
         int opCode = 49;
         int a = node.getLeft().getMachineCodeRepresentation();
         int c = node.getTrueBasicBlock().getMachineInstructionsStartingPosition() - instructionPosition;
+        System.out.println("Generated BLT jump from " + instructionPosition + "->" + node.getTrueBasicBlock().getMachineInstructionsStartingPosition());
 
         if (node.getFalseBasicBlock() == null) {
-            toReturn.add(DLX.assemble(opCode, a, c));
+            int cOffset = (c < 0) ? -1 : 1;
+            toReturn.add(DLX.assemble(opCode, a, c + cOffset));
         }
         else {
             int d = node.getFalseBasicBlock().getMachineInstructionsStartingPosition() - instructionPosition;
-            toReturn.add(DLX.assemble(opCode, a, c));
-            toReturn.add(DLX.assemble(50, 0, d));
+
+            int cOffset = (c < 0) ? -2 : 2;
+            int dOffset = (d < 0) ? -2 : 2;
+
+            toReturn.add(DLX.assemble(opCode, a, c + cOffset));
+            toReturn.add(DLX.assemble(50, 0, d + dOffset));
         }
 
         return toReturn;
     }
 
-    public ArrayList<Integer> instructionToMachineCode (BGE node, int instructionPosition) {
+    public ArrayList<Integer> instructionToMachineCode (BGE node, int instructionPosition, int offset) {
         ArrayList<Integer> toReturn = new ArrayList<>();
         int opCode = 50;
         int a = node.getLeft().getMachineCodeRepresentation();
         int c = node.getTrueBasicBlock().getMachineInstructionsStartingPosition() - instructionPosition;
+        System.out.println("Generated BGE jump from " + instructionPosition + "->" + node.getTrueBasicBlock().getMachineInstructionsStartingPosition());
 
         if (node.getFalseBasicBlock() == null) {
-            toReturn.add(DLX.assemble(opCode, a, c));
+            int cOffset = (c < 0) ? -1 : 1;
+            toReturn.add(DLX.assemble(opCode, a, c + cOffset));
         }
         else {
             int d = node.getFalseBasicBlock().getMachineInstructionsStartingPosition() - instructionPosition;
-            toReturn.add(DLX.assemble(opCode, a, c));
-            toReturn.add(DLX.assemble(49, 0, d));
+
+            int cOffset = (c < 0) ? -2 : 2;
+            int dOffset = (c < 0) ? -2 : 2;
+
+            toReturn.add(DLX.assemble(opCode, a, c + cOffset));
+            toReturn.add(DLX.assemble(49, 0, d + dOffset));
         }
         return toReturn;
     }
 
-    public ArrayList<Integer> instructionToMachineCode (BLE node, int instructionPosition) {
+    public ArrayList<Integer> instructionToMachineCode (BLE node, int instructionPosition, int offset) {
         ArrayList<Integer> toReturn = new ArrayList<>();
         int opCode = 51;
         int a = node.getLeft().getMachineCodeRepresentation();
         int c = node.getTrueBasicBlock().getMachineInstructionsStartingPosition() - instructionPosition;
+        System.out.println("Generated BLE jump from " + instructionPosition + "->" + node.getTrueBasicBlock().getMachineInstructionsStartingPosition());
 
         if (node.getFalseBasicBlock() == null) {
-            toReturn.add(DLX.assemble(opCode, a, c));
+            int cOffset = (c < 0) ? -1 : 1;
+            toReturn.add(DLX.assemble(opCode, a, c + cOffset));
         }
         else {
             int d = node.getFalseBasicBlock().getMachineInstructionsStartingPosition() - instructionPosition;
-            toReturn.add(DLX.assemble(opCode, a, c));
-            toReturn.add(DLX.assemble(52, 0, d));
+
+            int cOffset = (c < 0) ? -2 : 2;
+            int dOffset = (c < 0) ? -2 : 2;
+
+            toReturn.add(DLX.assemble(opCode, a, c + cOffset));
+            toReturn.add(DLX.assemble(52, 0, d + dOffset));
         }
         
         return toReturn;
     }
 
-    public ArrayList<Integer> instructionToMachineCode (BGT node, int instructionPosition) {
+    public ArrayList<Integer> instructionToMachineCode (BGT node, int instructionPosition, int offset) {
         ArrayList<Integer> toReturn = new ArrayList<>();
         int opCode = 52;
         int a = node.getLeft().getMachineCodeRepresentation();
         int c = node.getTrueBasicBlock().getMachineInstructionsStartingPosition() - instructionPosition;
+        System.out.println("Generated BGT jump from " + instructionPosition + "->" + node.getTrueBasicBlock().getMachineInstructionsStartingPosition());
 
         if (node.getFalseBasicBlock() == null) {
-            toReturn.add(DLX.assemble(opCode, a, c));
+            int cOffset = (c < 0) ? -1 : 1;
+            toReturn.add(DLX.assemble(opCode, a, c + cOffset));
         }
         else {
             int d = node.getFalseBasicBlock().getMachineInstructionsStartingPosition() - instructionPosition;
-            toReturn.add(DLX.assemble(opCode, a, c));
-            toReturn.add(DLX.assemble(51, 0, d));
+
+            int cOffset = (c < 0) ? -2 : 2;
+            int dOffset = (d < 0) ? -2 : 2;
+            
+            toReturn.add(DLX.assemble(opCode, a, c + cOffset));
+            toReturn.add(DLX.assemble(51, 0, d + dOffset));
         }
         return toReturn;
     }
 
-    public ArrayList<Integer> instructionToMachineCode (BRA node, int instructionPosition) {
+    public ArrayList<Integer> instructionToMachineCode (BRA node, int instructionPosition, int offset) {
         ArrayList<Integer> toReturn = new ArrayList<>();
         int opCode = 47;
         int a = 0; // branch if register 0 == 0, but r0 always holds the value 0
         int c = node.getTrueBasicBlock().getMachineInstructionsStartingPosition() - instructionPosition;
-        toReturn.add(DLX.assemble(opCode, a, c-1));
+        int cOffset = (c < 0) ? -1 : 1;
+        System.out.println("Generated BEQ jump from " + instructionPosition + "->" + node.getTrueBasicBlock().getMachineInstructionsStartingPosition());
+        toReturn.add(DLX.assemble(opCode, a, c + cOffset));
         return toReturn;
     }
 
