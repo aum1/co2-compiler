@@ -2431,7 +2431,7 @@ public class Compiler {
                 
             }
         }
-        // printOutVariableRegisters(variableRegisterMap);
+        printOutVariableRegisters(variableRegisterMap);
         this.variableRegisterMap = variableRegisterMap;
         assignRegistersToVariables(irHead, variableRegisterMap);
     }
@@ -2474,7 +2474,7 @@ public class Compiler {
         if (variableRegisterMap.containsKey(lexeme)) {
             int registerNumber = variableRegisterMap.get(lexeme);
             variable.setRegisterNumber(registerNumber);
-            // System.out.println("Assigned register " + registerNumber + " to variable " + lexeme);
+            System.out.println("Assigned register " + registerNumber + " to variable " + lexeme);
         }
     }
 
@@ -2487,7 +2487,7 @@ public class Compiler {
         Set<BasicBlock> visited = new HashSet<>();
         Stack<BasicBlock> visitedStack = new Stack<>();
     
-        //Getting the blocks in order of traversal.
+        // Get blocks in reverse post-order
         while (!queue.isEmpty()) {
             BasicBlock currentBlock = queue.poll();
     
@@ -2496,68 +2496,63 @@ public class Compiler {
             }
     
             visitedStack.push(currentBlock);
-    
             for (BasicBlock successor : currentBlock.getSuccessors().keySet()) {
                 queue.add(successor);
             }
         }
     
+        // Traverse the blocks in reverse post-order
         while (!visitedStack.isEmpty()) {
             BasicBlock currentBlock = visitedStack.pop();
-            
-            Set<Variable> localLiveVariables = blockLiveVariables.getOrDefault(currentBlock, new HashSet<>());
-    
-            for (TAC instruction : currentBlock.getInstructions().getReversedInstructions()) {
-                if (localLiveVariables.contains(instruction.getDest())) {
-                    if (!vertices.containsKey(instruction.getDest().getSymbol().token().lexeme())) {
-                        vertices.put(instruction.getDest().getSymbol().token().lexeme(), new HashSet<>());
+
+            // Initialize the set of live variables for this block
+            Set<Variable> localLiveVariables = new HashSet<>();
+
+            // First, add all live variables from its successors
+            for (BasicBlock successor : currentBlock.getSuccessors().keySet()) {
+                Set<Variable> succLiveVariables = blockLiveVariables.getOrDefault(successor, new HashSet<>());
+                localLiveVariables.addAll(succLiveVariables);
+            }
+
+            // Process instructions in reverse order
+            List<TAC> instructions = new ArrayList<>(currentBlock.getInstructions().getReversedInstructions());
+            for (TAC instruction : instructions) {
+                // Handling the "kill" operation: Remove destination variable from live variables
+                if (instruction.getDest() != null) {
+                    Variable destVariable = instruction.getDest();
+                    String destLexeme = destVariable.getSymbol().token().lexeme();
+
+                    // Before removing, create edges from the destination variable to all current live variables
+                    if (!vertices.containsKey(destLexeme)) {
+                        vertices.put(destLexeme, new HashSet<>());
                     }
-        
-                    for (Variable otherVariable : localLiveVariables) {
-                        if (!instruction.getDest().equals(otherVariable)) {
-                            if (!vertices.get(instruction.getDest().getSymbol().token().lexeme()).contains(otherVariable.getSymbol().token().lexeme())) {
-                                vertices.get(instruction.getDest().getSymbol().token().lexeme()).add(otherVariable.getSymbol().token().lexeme());
+                    for (Variable liveVar : localLiveVariables) {
+                        if (!destVariable.equals(liveVar)) {
+                            String liveVarLexeme = liveVar.getSymbol().token().lexeme();
+                            if (!vertices.containsKey(liveVarLexeme)) {
+                                vertices.put(liveVarLexeme, new HashSet<>());
                             }
+                            vertices.get(destLexeme).add(liveVarLexeme);
+                            vertices.get(liveVarLexeme).add(destLexeme);
                         }
                     }
-
-                    localLiveVariables.remove(instruction.getDest());
+                    // Now remove the destination variable
+                    localLiveVariables.remove(destVariable);
                 }
+
+                // "Gen" operation: Add all variables referenced in the instruction
                 localLiveVariables.addAll(getVariableReferences(instruction));
             }
-            currentBlock.getInstructions().getReversedInstructions();
-    
-            for (BasicBlock predecessor : currentBlock.getPredecessors()) {
-                // Check if the predecessor already has a live variables set in the map
-                Set<Variable> predecessorLiveVariables = blockLiveVariables.get(predecessor);
-                
-                // If not, create a new set and put it in the map
-                if (predecessorLiveVariables == null) {
-                    predecessorLiveVariables = new HashSet<>();
-                    blockLiveVariables.put(predecessor, predecessorLiveVariables);
-                }
-                
-                predecessorLiveVariables.addAll(localLiveVariables);
-            }
-            
-    
-            for (Variable liveVariable : localLiveVariables) {
-                if (!vertices.containsKey(liveVariable.getSymbol().token().lexeme())) {
-                    vertices.put(liveVariable.getSymbol().token().lexeme(), new HashSet<>());
-                }
-    
-                for (Variable otherVariable : localLiveVariables) {
-                    if (!liveVariable.equals(otherVariable)) {
-                        if (!vertices.get(liveVariable.getSymbol().token().lexeme()).contains(otherVariable.getSymbol().token().lexeme())) {
-                            vertices.get(liveVariable.getSymbol().token().lexeme()).add(otherVariable.getSymbol().token().lexeme());
-                        }
-                    }
-                }
-            }
+
+            // Store the current block's live variables in the map
+            blockLiveVariables.put(currentBlock, localLiveVariables);
+        }
+
+        // Optional: Print or otherwise use the vertices map
+        printOutVariableGraph(vertices);
+        return vertices;
         }
     
-        return vertices;
-    }
 
     public void printOutVariableGraph(Map<String, Set<String>> graph) {
         System.out.println("Graph: ");

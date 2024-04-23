@@ -7,7 +7,7 @@ import ir.cfg.TACVisitor;
 public class Variable implements Value {
 
     private Symbol sym;
-    private int registerNumber;
+    private int registerNumber = -1;
     private boolean isBool;
     private boolean isFloat;
     private boolean isInt;

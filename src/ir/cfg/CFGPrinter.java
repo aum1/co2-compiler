@@ -363,6 +363,7 @@ public class CFGPrinter implements CFGVisitor {
                 else {
                     rightStringPredecessor = "$";
                 }
+                System.out.println(((Assign) instruction).getDest());
                 System.out.println(((Assign) instruction).getID() + ":" + destStringPredecessor + ((Assign) instruction).getDest().getMachineCodeRepresentation() + "=" + rightStringPredecessor + ((Assign) instruction).getRight().getMachineCodeRepresentation());
             }
             if (currInstructions.getInstructions().get(i) instanceof Add) {
