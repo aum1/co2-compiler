@@ -37,6 +37,11 @@ public class Variable implements Value {
         return registerNumber;
     }
 
+    @Override
+    public float getMachineCodeFloatRepresentation() {
+        return registerNumber;
+    }
+
     public void setIsInt(boolean isInt) {
         this.isInt = isInt;
     }

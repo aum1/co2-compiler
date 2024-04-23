@@ -2720,22 +2720,23 @@ public class Compiler {
         a = instruction.getDest().getMachineCodeRepresentation();
         b = instruction.getLeft().getMachineCodeRepresentation();
         c = instruction.getRight().getMachineCodeRepresentation();
-
+    
         if (instruction.getRight().isFloat() && instruction.getRight() instanceof Literal) {
             // fADDI
             opCode = 27;
-        }
-        else if (instruction.getRight().isFloat()) {
+            float d = instruction.getRight().getMachineCodeFloatRepresentation();
+            return DLX.assemble(opCode, a, b, d);
+        } else if (instruction.getRight().isFloat()) {
             // fADD
             opCode = 7;
-        }
-        else if (instruction.getRight() instanceof Literal) {
+        } else if (instruction.getRight() instanceof Literal) {
             // ADDI
             opCode = 20;
         }
-
+    
         return DLX.assemble(opCode, a, b, c);
     }
+    
 
     public int instructionToMachineCode(Sub instruction) {
         int opCode, a, b, c;
@@ -2746,6 +2747,8 @@ public class Compiler {
     
         if (instruction.getRight().isFloat() && instruction.getRight() instanceof Literal) {
             opCode = 28; 
+            float d = instruction.getRight().getMachineCodeFloatRepresentation();
+            return DLX.assemble(opCode, a, b, d);
         }
         else if (instruction.getRight().isFloat()) {
             opCode = 8; 
@@ -2767,6 +2770,8 @@ public class Compiler {
     
         if (instruction.getRight().isFloat() && instruction.getRight() instanceof Literal) {
             opCode = 29;
+            float d = instruction.getRight().getMachineCodeFloatRepresentation();
+            return DLX.assemble(opCode, a, b, d);
         }
         else if (instruction.getRight().isFloat()) {
             opCode = 9;
@@ -2788,6 +2793,8 @@ public class Compiler {
     
         if (instruction.getRight().isFloat() && instruction.getRight() instanceof Literal) {
             opCode = 30;
+            float d = instruction.getRight().getMachineCodeFloatRepresentation();
+            return DLX.assemble(opCode, a, b, d);
         }
         else if (instruction.getRight().isFloat()) {
             opCode = 10;
@@ -2809,6 +2816,8 @@ public class Compiler {
     
         if (instruction.getRight().isFloat() && instruction.getRight() instanceof Literal) {
             opCode = 31;
+            float d = instruction.getRight().getMachineCodeFloatRepresentation();
+            return DLX.assemble(opCode, a, b, d);
         }
         else if (instruction.getRight().isFloat()) {
             opCode = 11; 
@@ -2830,6 +2839,8 @@ public class Compiler {
     
         if (instruction.getRight() instanceof Literal) {
             opCode = 25;
+            float d = instruction.getRight().getMachineCodeFloatRepresentation();
+            return DLX.assemble(opCode, a, b, d);
         }
     
         return DLX.assemble(opCode, a, b, c);
@@ -2846,6 +2857,8 @@ public class Compiler {
         if (instruction.getRight() instanceof Literal) {
             // ANDI - AND with immediate
             opCode = 34; // Opcode for ANDI
+            float d = instruction.getRight().getMachineCodeFloatRepresentation();
+            return DLX.assemble(opCode, a, b, d);
         }
     
         return DLX.assemble(opCode, a, b, c);
@@ -2862,6 +2875,8 @@ public class Compiler {
         if (instruction.getRight() instanceof Literal) {
             // ORI - OR with immediate
             opCode = 33; // Opcode for ORI
+            float d = instruction.getRight().getMachineCodeFloatRepresentation();
+            return DLX.assemble(opCode, a, b, d);
         }
     
         return DLX.assemble(opCode, a, b, c);
