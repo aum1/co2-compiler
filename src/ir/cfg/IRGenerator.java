@@ -104,6 +104,7 @@ public class IRGenerator {
             functionBlock.setInstructionList(currentInstructionList);
         }
         
+        functionBlock.addInstruction(new Return(TACList.getNextTACNumber()));
         functionBlocks.put(node.getFunctionName().token().lexeme(), functionBlock);
         return functionBlock;
     }
@@ -194,22 +195,52 @@ public class IRGenerator {
 
         if (relationSymbol != null) {
             if (relationSymbol.token().lexeme().equals("==")) {
-                previousBlock.addInstruction(new BEQ(TACList.getNextTACNumber(), previousBlock.getInstructions().getLatestVariable(), thenBlock, elseBlock));
+                if (node.hasElseBlock()) {
+                    previousBlock.addInstruction(new BEQ(TACList.getNextTACNumber(), previousBlock.getInstructions().getLatestVariable(), thenBlock, elseBlock));
+                }
+                else {
+                    previousBlock.addInstruction(new BEQ(TACList.getNextTACNumber(), previousBlock.getInstructions().getLatestVariable(), thenBlock, blockAfterIf));
+                }   
             }
             if (relationSymbol.token().lexeme().equals("!=")) {
-                previousBlock.addInstruction(new BNE(TACList.getNextTACNumber(), previousBlock.getInstructions().getLatestVariable(), thenBlock, elseBlock));
+                if (node.hasElseBlock()) {
+                    previousBlock.addInstruction(new BNE(TACList.getNextTACNumber(), previousBlock.getInstructions().getLatestVariable(), thenBlock, elseBlock));
+                }
+                else {
+                    previousBlock.addInstruction(new BNE(TACList.getNextTACNumber(), previousBlock.getInstructions().getLatestVariable(), thenBlock, blockAfterIf));
+                }
             }
             if (relationSymbol.token().lexeme().equals("<")) {
-                previousBlock.addInstruction(new BLT(TACList.getNextTACNumber(), previousBlock.getInstructions().getLatestVariable(), thenBlock, elseBlock));
+                if (node.hasElseBlock()) {
+                    previousBlock.addInstruction(new BLT(TACList.getNextTACNumber(), previousBlock.getInstructions().getLatestVariable(), thenBlock, elseBlock));
+                }
+                else {
+                    previousBlock.addInstruction(new BLT(TACList.getNextTACNumber(), previousBlock.getInstructions().getLatestVariable(), thenBlock, blockAfterIf));
+                }
             }
             if (relationSymbol.token().lexeme().equals("<=")) {
-                previousBlock.addInstruction(new BLE(TACList.getNextTACNumber(), previousBlock.getInstructions().getLatestVariable(), thenBlock, elseBlock));
+                if (node.hasElseBlock()) {
+                    previousBlock.addInstruction(new BLE(TACList.getNextTACNumber(), previousBlock.getInstructions().getLatestVariable(), thenBlock, elseBlock));
+                }
+                else {
+                    previousBlock.addInstruction(new BLE(TACList.getNextTACNumber(), previousBlock.getInstructions().getLatestVariable(), thenBlock, blockAfterIf));
+                }
             }
             if (relationSymbol.token().lexeme().equals(">")) {
-                previousBlock.addInstruction(new BGT(TACList.getNextTACNumber(), previousBlock.getInstructions().getLatestVariable(), thenBlock, elseBlock));
+                if (node.hasElseBlock()) {
+                    previousBlock.addInstruction(new BGT(TACList.getNextTACNumber(), previousBlock.getInstructions().getLatestVariable(), thenBlock, elseBlock));
+                }
+                else {
+                    previousBlock.addInstruction(new BGT(TACList.getNextTACNumber(), previousBlock.getInstructions().getLatestVariable(), thenBlock, blockAfterIf));
+                }
             }
             if (relationSymbol.token().lexeme().equals(">=")) {
-                previousBlock.addInstruction(new BGE(TACList.getNextTACNumber(), previousBlock.getInstructions().getLatestVariable(), thenBlock, elseBlock));
+                if (node.hasElseBlock()) {
+                    previousBlock.addInstruction(new BGE(TACList.getNextTACNumber(), previousBlock.getInstructions().getLatestVariable(), thenBlock, elseBlock));
+                }
+                else {
+                    previousBlock.addInstruction(new BGE(TACList.getNextTACNumber(), previousBlock.getInstructions().getLatestVariable(), thenBlock, blockAfterIf));
+                }
             }
         }
         else if (node.getRelation() instanceof BoolLiteral) {

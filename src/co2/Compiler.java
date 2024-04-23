@@ -2704,7 +2704,8 @@ public class Compiler {
             toReturn.add(instructionToMachineCode((Assign) (instruction)));
         }
         if (instruction instanceof Call) {
-            toReturn.add(instructionToMachineCode((Call) (instruction)));
+            ArrayList<Integer> retArrayList = instructionToMachineCode((Call) (instruction), instructionPosition);
+            return retArrayList;
         }
         if (instruction instanceof Return) {
             ArrayList<Integer> retArraylist = instructionToMachineCode((Return) (instruction));
@@ -3073,36 +3074,45 @@ public class Compiler {
         return 0;
     }
 
-    public int instructionToMachineCode (Call node) {
+    public ArrayList<Integer> instructionToMachineCode (Call node, int instructionPosition) {
+        ArrayList<Integer> toReturn = new ArrayList<>();
         int opCode;
         switch (node.getFunctionName().token().lexeme()) {
             case "readInt":
                 opCode = 56;
-                return DLX.assemble(opCode, node.getDest().getMachineCodeRepresentation());
+                toReturn.add(DLX.assemble(opCode, node.getDest().getMachineCodeRepresentation()));
+                return toReturn;
             case "readFloat":
                 opCode = 57;
-                return DLX.assemble(opCode, node.getDest().getMachineCodeRepresentation());
+                toReturn.add(DLX.assemble(opCode, node.getDest().getMachineCodeRepresentation()));
+                return toReturn;
             case "readBool":
                 opCode = 58;
-                return DLX.assemble(opCode, node.getDest().getMachineCodeRepresentation());
+                toReturn.add(DLX.assemble(opCode, node.getDest().getMachineCodeRepresentation()));
+                return toReturn;
             case "printInt":
                 opCode = 59;
-                return DLX.assemble(opCode, variableRegisterMap.get(((VariableReference) node.getArgs().getExpressionParameters().get(0)).getIdent().token().lexeme()));
+                toReturn.add(DLX.assemble(opCode, variableRegisterMap.get(((VariableReference) node.getArgs().getExpressionParameters().get(0)).getIdent().token().lexeme())));
+                return toReturn;
             case "printFloat":
                 opCode = 60;
-                return DLX.assemble(opCode, variableRegisterMap.get(((VariableReference) node.getArgs().getExpressionParameters().get(0)).getIdent().token().lexeme()));
+                toReturn.add(DLX.assemble(opCode, variableRegisterMap.get(((VariableReference) node.getArgs().getExpressionParameters().get(0)).getIdent().token().lexeme())));
+                return toReturn;
             case "printBool":
                 opCode = 61;
-                return DLX.assemble(opCode, variableRegisterMap.get(((VariableReference) node.getArgs().getExpressionParameters().get(0)).getIdent().token().lexeme()));
+                toReturn.add(DLX.assemble(opCode, variableRegisterMap.get(((VariableReference) node.getArgs().getExpressionParameters().get(0)).getIdent().token().lexeme())));
+                return toReturn;
             case "println":
                 opCode = 62;
-                return DLX.assemble(opCode);
+                toReturn.add(DLX.assemble(opCode, variableRegisterMap.get(((VariableReference) node.getArgs().getExpressionParameters().get(0)).getIdent().token().lexeme())));
+                return toReturn;
             default:
-                opCode = 63;
-                // handle call function here 
+                opCode = 53;
+                toReturn.add(DLX.assemble(opCode, node.getDestinationBlock().getMachineInstructionsStartingPosition()));
+                return toReturn;
+
         }
         
-        return 0;
     }
 
     public ArrayList<Integer> instructionToMachineCode (Return node) {
@@ -3119,8 +3129,7 @@ public class Compiler {
             }
         }
         
-        // TODO: add address
-        toReturn.add(DLX.assemble(55, 0));
+        toReturn.add(DLX.assemble(55, 31));
         return toReturn;
     }
 }
