@@ -9,4 +9,5 @@ public interface Value extends Visitable {
     public boolean isInt();
     public boolean isBool();
     public int getMachineCodeRepresentation();
+    public float getMachineCodeFloatRepresentation();
 }
