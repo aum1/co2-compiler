@@ -1469,8 +1469,8 @@ public class Compiler {
                         case "dce":
                             while (!hasConverged) {
                                 hasConverged = true;
-                                resetAllBlocks();
                                 deadCodeElimination(file);
+                                resetAllBlocks();
                             }
                             break;
                     }
@@ -1657,6 +1657,7 @@ public class Compiler {
 
 
     private void constantPropagation(FileWriter file) {
+        System.out.println("1");
         for (BasicBlock funcBlock : this.irHead.getFunctionsMap().values()) {
             funcBlock.setInstructionList(constantPropagationSingleBlock(funcBlock.getInstructions(), file));
         }
@@ -1677,8 +1678,8 @@ public class Compiler {
             }
         }
     }
-
     private void constantFolding(FileWriter file) {
+
         for (BasicBlock funcBlock : this.irHead.getFunctionsMap().values()) {
             funcBlock.setInstructionList(constantFoldingSingleBlock(funcBlock.getInstructions(), file));
         }
@@ -1700,6 +1701,7 @@ public class Compiler {
     }
 
     private void copyPropagation(FileWriter file) {
+        System.out.println("here");
         Queue<BasicBlock> blockQueue = new LinkedList<>();
         HashMap<String, Variable> liveVariables = new HashMap<>();
 
@@ -1941,6 +1943,7 @@ public class Compiler {
     }
 
     private TACList constantFoldingSingleBlock(TACList currInstructions, FileWriter file) {
+        System.out.println("here");
         for (int i = 0; i < currInstructions.getInstructions().size(); i++) {
             TAC instruction = currInstructions.getInstructions().get(i);
             Literal foldedConstant;
@@ -2084,13 +2087,16 @@ public class Compiler {
                 return tacList;
             }
         }
+        // System.out.println("first instruction is " + currInstructions.get(indexOfLast));
         
         Set<Variable> firstInstructionReferences = getVariableReferences(currInstructions.get(indexOfLast));
         for (Variable v : firstInstructionReferences) {
             liveVariables.add(v.getSymbol().token().lexeme());
         }
+        // System.out.println("first instruction live variables" + liveVariables);
 
         for (int i = 0; i < currInstructions.size(); i++) {
+            System.out.println(liveVariables);
             TAC instruction = currInstructions.get(i);
             // if ((instruction instanceof Call) || instruction.getDest() == null) {
             //     continue;
@@ -2118,31 +2124,6 @@ public class Compiler {
                     i--;
                 }
             }
-
-
-            // if (instruction.getDest() != null) {
-            //     if (liveVariables.contains(instruction.getDest().getSymbol().token().lexeme())) {
-            //         liveVariables.remove(instruction.getDest().getSymbol().token().lexeme());
-
-            //         Set<Variable> instructionReferences = getVariableReferences(instruction);
-            //         for (Variable v : instructionReferences) {
-            //             liveVariables.add(v.getSymbol().token().lexeme());
-            //         }
-            //     }
-            //     // if dest is not part of set, remove instruction
-            //     else {
-            //         currInstructions.remove(instruction);
-            //         try {
-            //             file.write("DCE: Removed instruction " + instruction.getID() + ", as instruction was dead.\n");
-            //             hasConverged = false;
-            //             overallConvergence = true;
-            //         } catch (IOException e) {
-            //             e.printStackTrace();
-            //         }
-            //         i--;
-            //     }
-            // }
-            
         }
         // reverse list back to correct order
         tacList.getReversedInstructions();
@@ -3084,7 +3065,7 @@ public class Compiler {
             }
             else if ((node.getRight()).isFloat()) {
                 // float add with the value 0
-                return DLX.assemble(27, node.getDest().getMachineCodeRepresentation(), 0, node.getRight().getMachineCodeRepresentation());
+                return DLX.assemble(27, node.getDest().getMachineCodeRepresentation(), 0, node.getRight().getMachineCodeFloatRepresentation());
             }
             else if ((node.getRight()).isInt()) {
                 // int add with the value 0
