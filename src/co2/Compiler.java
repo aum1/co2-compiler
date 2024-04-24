@@ -1409,7 +1409,7 @@ public class Compiler {
             optimizationArgs.add("cpp");
             optimizationArgs.add("cse");
             optimizationArgs.add("dce");
-            // isLoop = true;
+            isLoop = true;
         }
         else {
             optimizationArgs = args;
@@ -1636,7 +1636,7 @@ public class Compiler {
                                 nextBlock.getInstructions().getInstructions().add(i, new Assign(TACList.getNextTACNumber(), v, new Literal(new Symbol(new Token("0", 0, 0)))));
                                 i++;
                                 // write to file and update convergence
-                                file.write("DCE: Warning, Uninitialized variable " + v + ". Set " + v + " to 0.\n");
+                                file.write("Warning, Uninitialized variable " + v + ". Set " + v + " to 0.\n");
                                 hasConverged = false;
                                 overallConvergence = true;
                             } catch (IOException e) {
@@ -2096,7 +2096,7 @@ public class Compiler {
         // System.out.println("first instruction live variables" + liveVariables);
 
         for (int i = 0; i < currInstructions.size(); i++) {
-            System.out.println(liveVariables);
+            // System.out.println(liveVariables);
             TAC instruction = currInstructions.get(i);
             // if ((instruction instanceof Call) || instruction.getDest() == null) {
             //     continue;
@@ -2527,6 +2527,7 @@ public class Compiler {
                     if (!vertices.containsKey(destLexeme)) {
                         vertices.put(destLexeme, new HashSet<>());
                     }
+
                     for (Variable liveVar : localLiveVariables) {
                         if (!destVariable.equals(liveVar)) {
                             String liveVarLexeme = liveVar.getSymbol().token().lexeme();
@@ -2543,6 +2544,24 @@ public class Compiler {
 
                 // "Gen" operation: Add all variables referenced in the instruction
                 localLiveVariables.addAll(getVariableReferences(instruction));
+
+                // add edge from varible to all other live variables
+                Set<Variable> variablesToAdd = getVariableReferences(instruction);
+                for (Variable liveVar : variablesToAdd) {
+                    for (int i = 0; i < localLiveVariables.size(); i++) {
+                        String currentLiveVariable = ((Variable) localLiveVariables.toArray()[i]).getSymbol().token().lexeme();
+                        String liveVarLexeme = liveVar.getSymbol().token().lexeme();
+                        if (!vertices.containsKey(liveVarLexeme)) {
+                            vertices.put(liveVarLexeme, new HashSet<>());
+                        }
+                        if (!vertices.containsKey(currentLiveVariable)) {
+                            vertices.put(currentLiveVariable, new HashSet<>());
+                        }
+                        vertices.get(currentLiveVariable).add(liveVarLexeme);
+                        vertices.get(liveVarLexeme).add(currentLiveVariable);
+                    }
+                }
+
             }
 
             // Store the current block's live variables in the map

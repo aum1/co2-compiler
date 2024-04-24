@@ -55,6 +55,7 @@ import ir.tac.Div;
 import ir.tac.Literal;
 import ir.tac.Mod;
 import ir.tac.Mul;
+import ir.tac.Neg;
 import ir.tac.Or;
 import ir.tac.Pow;
 import ir.tac.Return;
@@ -527,6 +528,14 @@ public class IRGenerator {
         dest.setIsInt(leftLatest.isInt());
         
         currentInstructionList.addInstruction(new Or(TACList.getNextTACNumber(), dest, leftLatest, rightLatest));
+        currentInstructionList.setLatestVariable(dest);
+    }
+
+    public void visit(LogicalNot node) {
+        Variable dest = new Variable(new Symbol(new Token("t" + BasicBlock.getNextTempNumber(), node.charPosition(), node.lineNumber())));
+        visit(node.getExpression());
+
+        currentInstructionList.addInstruction(new Neg(TACList.getNextTACNumber(), dest, currentInstructionList.getLatestVariable()));
         currentInstructionList.setLatestVariable(dest);
     }
 
