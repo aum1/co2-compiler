@@ -31,10 +31,6 @@ public class Literal implements Value {
         return Integer.valueOf(val.token().lexeme());
     }
 
-    public float getMachineCodeFloatRepresentation() {
-        return Float.valueOf(val.token().lexeme());
-    }
-
     @Override
     public float getMachineCodeFloatRepresentation() {
         return Float.valueOf(val.token().lexeme());

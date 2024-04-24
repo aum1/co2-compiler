@@ -1330,10 +1330,16 @@ public class Compiler {
 
             if (dimensionList.size() == 0) {
                 VariableReference varReferenceNode = new VariableReference(currToken.lineNumber(), currToken.charPosition(), new Symbol(currToken));
-                varReferenceNode.setIsBool(miniVarialeDeclarationList.get(currToken.lexeme()).contains("BOOL"));
-                varReferenceNode.setIsFloat(miniVarialeDeclarationList.get(currToken.lexeme()).contains("FLOAT"));
-                varReferenceNode.setIsInt(miniVarialeDeclarationList.get(currToken.lexeme()).contains("INT"));
-
+                if (miniVarialeDeclarationList.get(currToken.lexeme()) != null) {
+                    varReferenceNode.setIsBool(miniVarialeDeclarationList.get(currToken.lexeme()).contains("BOOL"));
+                    varReferenceNode.setIsFloat(miniVarialeDeclarationList.get(currToken.lexeme()).contains("FLOAT"));
+                    varReferenceNode.setIsInt(miniVarialeDeclarationList.get(currToken.lexeme()).contains("INT"));
+                }
+                else {
+                    varReferenceNode.setIsBool(false);
+                    varReferenceNode.setIsFloat(false);
+                    varReferenceNode.setIsInt(false);
+                }
                 // System.out.println("For: " + currToken.lexeme() + " we got " + miniVarialeDeclarationList.get(currToken.lexeme()));
 
                 returnNode = varReferenceNode;
@@ -1391,20 +1397,23 @@ public class Compiler {
 
     public String optimization(List<String> args, boolean isLoop, boolean isMax) {
         List<String> optimizationArgs = new ArrayList<>(args);
-        // if (isMax) {
-        //     System.out.println("update to max");
-        //     optimizationArgs.clear();
-        //     optimizationArgs.clear();
-        //     optimizationArgs.add("cp");
-        //     optimizationArgs.add("cf");
-        //     optimizationArgs.add("cpp");
-        //     optimizationArgs.add("cse");
-        //     optimizationArgs.add("dce");
-        //     isLoop = true;
-        // }
-        // else {
-        //     optimizationArgs = args;
-        // }
+        isMax = !isMax;
+        // isLoop = !isLoop;
+
+        if (isMax) {
+            System.out.println("update to max");
+            optimizationArgs.clear();
+            optimizationArgs.clear();
+            optimizationArgs.add("cp");
+            optimizationArgs.add("cf");
+            optimizationArgs.add("cpp");
+            optimizationArgs.add("cse");
+            optimizationArgs.add("dce");
+            // isLoop = true;
+        }
+        else {
+            optimizationArgs = args;
+        }
 
         // open file writer
         FileWriter file = null;
@@ -1414,6 +1423,12 @@ public class Compiler {
             e.printStackTrace();
         }
 
+        orphanFunctionElimination(file);
+        resetAllBlocks();
+        uninitializedVars(file);
+        resetAllBlocks();
+        System.out.println("Loop: " + isLoop);
+        System.out.println("Max: " + isMax);
 
         // loop for optimization until convergence
         // if true, then loop, if not then stop after one
@@ -1427,32 +1442,33 @@ public class Compiler {
                             while (!hasConverged) {
                                 hasConverged = true;
                                 constantPropagation(file);
+                                resetAllBlocks();
                             }
                             break;
                         case "cf":
                             while (!hasConverged) {
                                 hasConverged = true;
-                                constantFolding(file);  
+                                constantFolding(file); 
+                                resetAllBlocks(); 
                             }
                             break;
                         case "cpp":
                             while (!hasConverged) {
                                 hasConverged = true;
                                 copyPropagation(file); 
+                                resetAllBlocks();
                             }
                             break;
                         case "cse":
                             while (!hasConverged) {
                                 hasConverged = true;
                                 commonSubExpressionElimination(file);
+                                resetAllBlocks();
                             }
                             break;
                         case "dce":
                             while (!hasConverged) {
                                 hasConverged = true;
-                                orphanFunctionElimination(file);
-                                resetAllBlocks();
-                                uninitializedVars(file);
                                 resetAllBlocks();
                                 deadCodeElimination(file);
                             }
@@ -1462,56 +1478,56 @@ public class Compiler {
                 }
             } while(overallConvergence);
         }
-        
-        for (String currOptimization : optimizationArgs) {
-            hasConverged = false;
-            switch (currOptimization) {
-                case "cp":
-                    while (!hasConverged) {
-                        hasConverged = true;
-                        constantPropagation(file);
-                    }
-                    break;
-                case "cf":
-                    while (!hasConverged) {
-                        hasConverged = true;
-                        constantFolding(file);  
-                    }
-                    break;
-                case "cpp":
-                    while (!hasConverged) {
-                        hasConverged = true;
-                        copyPropagation(file); 
-                    }
-                    break;
-                case "cse":
-                    while (!hasConverged) {
-                        hasConverged = true;
-                        commonSubExpressionElimination(file);
-                    }
-                    break;
-                case "dce":
-                    while (!hasConverged) {
-                        hasConverged = true;
-                        deadCodeElimination(file);
-                        resetAllBlocks();
-                        orphanFunctionElimination(file);
-                        resetAllBlocks();
-                        // deadBranchElimination(file);
-                        // resetAllBlocks();
-                        uninitializedVars(file);
-                        resetAllBlocks();
-                    }
-                    break;
+        else {
+            for (String currOptimization : optimizationArgs) {
+                hasConverged = false;
+                switch (currOptimization) {
+                    case "cp":
+                        while (!hasConverged) {
+                            hasConverged = true;
+                            constantPropagation(file);
+                            resetAllBlocks();
+                        }
+                        break;
+                    case "cf":
+                        while (!hasConverged) {
+                            hasConverged = true;
+                            constantFolding(file);  
+                            resetAllBlocks();
+                        }
+                        break;
+                    case "cpp":
+                        while (!hasConverged) {
+                            hasConverged = true;
+                            copyPropagation(file); 
+                            resetAllBlocks();
+                        }
+                        break;
+                    case "cse":
+                        while (!hasConverged) {
+                            hasConverged = true;
+                            commonSubExpressionElimination(file);
+                            resetAllBlocks();
+                        }
+                        break;
+                    case "dce":
+                        while (!hasConverged) {
+                            hasConverged = true;
+                            deadCodeElimination(file);
+                            resetAllBlocks();
+                        }
+                        break;
+                }
+                overallConvergence = hasConverged;
+                resetAllBlocks();
             }
-            overallConvergence = hasConverged;
-            resetAllBlocks();
+            try {
+                file.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
-        try {
-            file.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+
 
         return irHead.asDotGraph();
     }
@@ -1542,7 +1558,6 @@ public class Compiler {
         while (!blockQueue.isEmpty()) {
             BasicBlock nextBlock = blockQueue.remove();
             nextBlock.markVisited();
-            // nextBlock.setInstructionList(deadCodeAfterReturnSingleBlock(nextBlock.getInstructions(), file, liveVariables));
             nextBlock.setInstructionList(deadCodeEliminationSingleBlock(nextBlock.getInstructions(), file, liveVariables));
 
             for (BasicBlock nextSuccessor : nextBlock.getSuccessors().keySet()) {
@@ -1595,26 +1610,6 @@ public class Compiler {
         }
     }
 
-    // private void deadBranchElimination(FileWriter file) {
-    //     Queue<BasicBlock> blockQueue = new LinkedList<>();
-    //     blockQueue.add(this.irHead);
-    //     while (!blockQueue.isEmpty()) {
-    //         BasicBlock nextBlock = blockQueue.remove();
-    //         if (!nextBlock.visited()) {
-    //             nextBlock.markVisited();
-    //             if (nextBlock.getInstructions().getInstructions().get(nextBlock.getInstructions().getInstructions().size()-1) instanceof BRA) {
-    //                 System.out.println(nextBlock.removeSuccessor(((BRA) nextBlock.getInstructions().getInstructions().get(nextBlock.getInstructions().getInstructions().size()-1)).getID()));
-    //             }
-    //         }
-
-    //         for (BasicBlock nextSuccessor : nextBlock.getSuccessors().keySet()) {
-    //             // if not visited
-    //             if (!nextSuccessor.visited())
-    //                 blockQueue.add(nextSuccessor);
-    //         }
-    //     }
-    // }
-
     private void uninitializedVars(FileWriter file) {
         Set<String> initizalizedVars = new HashSet<>();
         Queue<BasicBlock> blockQueue = new LinkedList<>();
@@ -1657,8 +1652,6 @@ public class Compiler {
                 if (!nextSuccessor.visited())
                     blockQueue.add(nextSuccessor);
             }
-
-            // CFGPrinter.LegiblePrint(irHead.getInstructions());
         }  
     }
 
@@ -1667,7 +1660,7 @@ public class Compiler {
         for (BasicBlock funcBlock : this.irHead.getFunctionsMap().values()) {
             funcBlock.setInstructionList(constantPropagationSingleBlock(funcBlock.getInstructions(), file));
         }
-
+        
         Queue<BasicBlock> blockQueue = new LinkedList<>();
         blockQueue.add(this.irHead);
         while (!blockQueue.isEmpty()) {
@@ -2099,30 +2092,57 @@ public class Compiler {
 
         for (int i = 0; i < currInstructions.size(); i++) {
             TAC instruction = currInstructions.get(i);
-            if ((instruction instanceof Call) || instruction.getDest() == null) {
-                continue;
-            }
+            // if ((instruction instanceof Call) || instruction.getDest() == null) {
+            //     continue;
+            // }
 
-            // check if dest is part of set, if so then add left and right
-            if (liveVariables.contains(instruction.getDest().getSymbol().token().lexeme())) {
-                liveVariables.remove(instruction.getDest().getSymbol().token().lexeme());
+            // check if dest is part of set
+            if (instruction.getDest() != null) {
                 Set<Variable> instructionReferences = getVariableReferences(instruction);
                 for (Variable v : instructionReferences) {
                     liveVariables.add(v.getSymbol().token().lexeme());
                 }
-            }
-            // if dest is not part of set, remove instruction
-            else {
-                currInstructions.remove(instruction);
-                try {
-                    file.write("DCE: Removed instruction " + instruction.getID() + ", as instruction was dead.\n");
-                    hasConverged = false;
-                    overallConvergence = true;
-                } catch (IOException e) {
-                    e.printStackTrace();
+
+                if (liveVariables.contains(instruction.getDest().getSymbol().token().lexeme())) {
+                    liveVariables.remove(instruction.getDest().getSymbol().token().lexeme());
                 }
-                i--;
+                else {
+                    currInstructions.remove(instruction);
+                    try {
+                        file.write("DCE: Removed instruction " + instruction.getID() + ", as instruction was dead.\n");
+                        hasConverged = false;
+                        overallConvergence = true;
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    i--;
+                }
             }
+
+
+            // if (instruction.getDest() != null) {
+            //     if (liveVariables.contains(instruction.getDest().getSymbol().token().lexeme())) {
+            //         liveVariables.remove(instruction.getDest().getSymbol().token().lexeme());
+
+            //         Set<Variable> instructionReferences = getVariableReferences(instruction);
+            //         for (Variable v : instructionReferences) {
+            //             liveVariables.add(v.getSymbol().token().lexeme());
+            //         }
+            //     }
+            //     // if dest is not part of set, remove instruction
+            //     else {
+            //         currInstructions.remove(instruction);
+            //         try {
+            //             file.write("DCE: Removed instruction " + instruction.getID() + ", as instruction was dead.\n");
+            //             hasConverged = false;
+            //             overallConvergence = true;
+            //         } catch (IOException e) {
+            //             e.printStackTrace();
+            //         }
+            //         i--;
+            //     }
+            // }
+            
         }
         // reverse list back to correct order
         tacList.getReversedInstructions();
@@ -2431,7 +2451,7 @@ public class Compiler {
                 
             }
         }
-        printOutVariableRegisters(variableRegisterMap);
+        // printOutVariableRegisters(variableRegisterMap);
         this.variableRegisterMap = variableRegisterMap;
         assignRegistersToVariables(irHead, variableRegisterMap);
     }
@@ -3092,6 +3112,7 @@ public class Compiler {
     public ArrayList<Integer> instructionToMachineCode (Call node, int instructionPosition) {
         ArrayList<Integer> toReturn = new ArrayList<>();
         int opCode;
+        System.out.println("function name: " + node.getFunctionName().token().lexeme());
         switch (node.getFunctionName().token().lexeme()) {
             case "readInt":
                 opCode = 56;
@@ -3107,6 +3128,7 @@ public class Compiler {
                 return toReturn;
             case "printInt":
                 opCode = 59;
+                System.out.println("printing ints");
                 toReturn.add(DLX.assemble(opCode, variableRegisterMap.get(((VariableReference) node.getArgs().getExpressionParameters().get(0)).getIdent().token().lexeme())));
                 return toReturn;
             case "printFloat":
@@ -3119,11 +3141,12 @@ public class Compiler {
                 return toReturn;
             case "println":
                 opCode = 62;
-                toReturn.add(DLX.assemble(opCode, variableRegisterMap.get(((VariableReference) node.getArgs().getExpressionParameters().get(0)).getIdent().token().lexeme())));
+                toReturn.add(DLX.assemble(opCode));
                 return toReturn;
             default:
                 opCode = 53;
                 toReturn.add(DLX.assemble(opCode, node.getDestinationBlock().getMachineInstructionsStartingPosition()));
+                toReturn.add(DLX.assemble(47, 0, node.getDestinationBlock().getMachineInstructionsLength()+2));
                 return toReturn;
         }   
     }

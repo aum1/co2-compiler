@@ -93,8 +93,8 @@ public class BasicBlock extends Block implements Iterable<TAC> {
         this.instructions = newInstructionList;
     }
 
-    public void getMachineInstructionsLength() {
-        this.machineInstructions.size();
+    public int getMachineInstructionsLength() {
+        return this.machineInstructions.size();
     }
 
     public TACList getInstructions() {
