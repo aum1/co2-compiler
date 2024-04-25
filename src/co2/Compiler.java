@@ -3089,18 +3089,18 @@ public class Compiler {
 
         // if register is spilled
         if (node.getDest().getRegisterNumber() == -1) {
-            isSpilled = true;
             // if variable already has an offset
             if (variableToOffset.containsKey(node.getDest().getSymbol().token().lexeme())) {
                 retArrayList.add(DLX.assemble(40, leftSpilledRegister, 30, variableToOffset.get(node.getDest().getSymbol().token().lexeme())));
-                registerToSet = leftSpilledRegister;
             }
             // variable does not have an offset, set one, update current offset, and then load
             else {
                 variableToOffset.put(node.getDest().getSymbol().token().lexeme(), currentOffset);
                 currentOffset -= 4;
-                registerToSet = leftSpilledRegister;
             }
+            
+            isSpilled = true;
+            registerToSet = leftSpilledRegister;
         }
 
         if (node.getRight() instanceof Literal) {
@@ -3132,6 +3132,7 @@ public class Compiler {
             }  
         }
 
+        // if spilled, then add assignment to move value back to memory location
         if (isSpilled) {
             retArrayList.add(DLX.assemble(44, registerToSet, 30, variableToOffset.get(node.getDest().getSymbol().token().lexeme())));
         }
