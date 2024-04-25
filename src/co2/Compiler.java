@@ -2427,14 +2427,15 @@ public class Compiler {
                 }
             }
 
-            // no allowed vertex, so must spill
+            // no allowed vertex, so mark as spilled
             if (registerNumber == numRegs) {
-                
+                variableRegisterMap.put(poppedVertex, -1);
             }
         }
         // printOutVariableRegisters(variableRegisterMap);
         this.variableRegisterMap = variableRegisterMap;
         assignRegistersToVariables(irHead, variableRegisterMap);
+        printOutVariableRegisters(variableRegisterMap);
     }
 
     public void assignRegistersToVariables(BasicBlock irHead, Map<String, Integer> variableRegisterMap) {
@@ -2598,6 +2599,10 @@ public class Compiler {
     Map<String, Integer> variableToOffset = new HashMap<>();
     Map<String, Integer> variableRegisterMap = null;
 
+    int leftSpilledRegister = 26;
+    int rightSpilledRegister = 27;
+    int currentOffset = 0;
+
     public int[] genCode() {
         // CFGPrinter.LegiblePrint(irHead);
     
@@ -2721,7 +2726,8 @@ public class Compiler {
             toReturn.add(instructionToMachineCode((Comparison) (instruction)));
         }
         if (instruction instanceof Assign) {
-            toReturn.add(instructionToMachineCode((Assign) (instruction)));
+            ArrayList<Integer> retArrayList = instructionToMachineCode((Assign) (instruction));
+            return retArrayList;
         }
         if (instruction instanceof Call) {
             ArrayList<Integer> retArrayList = instructionToMachineCode((Call) (instruction), instructionPosition);
@@ -3076,37 +3082,60 @@ public class Compiler {
         return DLX.assemble(opCode, a, b, c);
     }
     
-    public int instructionToMachineCode (Assign node) {
+    public ArrayList<Integer> instructionToMachineCode (Assign node) {
+        ArrayList<Integer> retArrayList = new ArrayList<>();
+        int registerToSet = node.getDest().getRegisterNumber();
+        boolean isSpilled = false;
+
+        // if register is spilled
+        if (node.getDest().getRegisterNumber() == -1) {
+            isSpilled = true;
+            // if variable already has an offset
+            if (variableToOffset.containsKey(node.getDest().getSymbol().token().lexeme())) {
+                retArrayList.add(DLX.assemble(40, leftSpilledRegister, 30, variableToOffset.get(node.getDest().getSymbol().token().lexeme())));
+                registerToSet = leftSpilledRegister;
+            }
+            // variable does not have an offset, set one, update current offset, and then load
+            else {
+                variableToOffset.put(node.getDest().getSymbol().token().lexeme(), currentOffset);
+                currentOffset -= 4;
+                registerToSet = leftSpilledRegister;
+            }
+        }
+
         if (node.getRight() instanceof Literal) {
             if ((node.getRight()).isBool()) {
                 // if a boolean, add an or with the value 0 and the 
-                return DLX.assemble(33, node.getDest().getMachineCodeRepresentation(), 0, node.getRight().getMachineCodeRepresentation());
+                retArrayList.add(DLX.assemble(33, registerToSet, 0, node.getRight().getMachineCodeRepresentation()));
             }
             else if ((node.getRight()).isFloat()) {
                 // float add with the value 0
-                return DLX.assemble(27, node.getDest().getMachineCodeRepresentation(), 0, node.getRight().getMachineCodeFloatRepresentation());
+                retArrayList.add(DLX.assemble(27, registerToSet, 0, node.getRight().getMachineCodeFloatRepresentation()));
             }
             else if ((node.getRight()).isInt()) {
                 // int add with the value 0
-                return DLX.assemble(20, node.getDest().getMachineCodeRepresentation(), 0, node.getRight().getMachineCodeRepresentation());
+                retArrayList.add(DLX.assemble(20, registerToSet, 0, node.getRight().getMachineCodeRepresentation()));
             }   
         }
         else {
             if ((node.getRight()).isBool()) {
                 // if a boolean, add an or with the value 0 and the 
-                return DLX.assemble(13, node.getDest().getMachineCodeRepresentation(), 0, node.getRight().getMachineCodeRepresentation());
+                retArrayList.add(DLX.assemble(13, registerToSet, 0, node.getRight().getMachineCodeRepresentation()));
             }
             else if ((node.getRight()).isFloat()) {
                 // float add with the value 0
-                return DLX.assemble(7, node.getDest().getMachineCodeRepresentation(), 0, node.getRight().getMachineCodeRepresentation());
+                retArrayList.add(DLX.assemble(7, registerToSet, 0, node.getRight().getMachineCodeRepresentation()));
             }
             else if ((node.getRight()).isInt()) {
                 // int add with the value 0
-                return DLX.assemble(0, node.getDest().getMachineCodeRepresentation(), 0, node.getRight().getMachineCodeRepresentation());
+                retArrayList.add(DLX.assemble(0, registerToSet, 0, node.getRight().getMachineCodeRepresentation()));
             }  
-        } 
+        }
 
-        return 0;
+        if (isSpilled) {
+            retArrayList.add(DLX.assemble(44, registerToSet, 30, variableToOffset.get(node.getDest().getSymbol().token().lexeme())));
+        }
+        return retArrayList;
     }
 
     public ArrayList<Integer> instructionToMachineCode (Call node, int instructionPosition) {
