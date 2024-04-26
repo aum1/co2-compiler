@@ -57,7 +57,9 @@ public class Call extends TAC {
     }
 
     public boolean isPredefined() {
-        return this.isPredefined;
+        String currFunctionName = functionName.token().lexeme();
+        return (currFunctionName.equals("printInt") || currFunctionName.equals("printFloat") || currFunctionName.equals("printBool")
+            || currFunctionName.equals("readInt") || currFunctionName.equals("readFloat") || currFunctionName.equals("readBool"));
     }
 
     public BasicBlock getDestinationBlock() {
