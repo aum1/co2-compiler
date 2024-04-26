@@ -50,9 +50,6 @@ public int getMachineCodeRepresentation() {
     }
 }
 
-
-
-
     @Override
     public float getMachineCodeFloatRepresentation() {
         return Float.valueOf(val.token().lexeme());
@@ -65,7 +62,7 @@ public int getMachineCodeRepresentation() {
 
     @Override
     public boolean isBool() {
-        return (val.token().kind() == Kind.BOOL);
+        return (val.token().kind() == Kind.TRUE || val.token().kind() == Kind.FALSE);
     }
 
     @Override

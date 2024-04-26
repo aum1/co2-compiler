@@ -2641,12 +2641,12 @@ public class Compiler {
                     }
                 }
 
-                // System.out.println("for instruction: " + instruction.getID());
+                System.out.println("for instruction: " + instruction.getID());
                 ArrayList<Integer> instructionMachineCode = instructionToMachineCode(instruction, generatedCode.size(), 0);
 
-                // for (int i = 0; i < instructionMachineCode.size(); i++) {
-                //     System.out.print(i + ":\t" + DLX.instrString(instructionMachineCode.get(i))); // \newline included in DLX.instrString()
-                // }
+                for (int i = 0; i < instructionMachineCode.size(); i++) {
+                    System.out.print(i + ":\t" + DLX.instrString(instructionMachineCode.get(i))); // \newline included in DLX.instrString()
+                }
 
 
                 for (Integer code : instructionMachineCode) {
@@ -3245,11 +3245,9 @@ public class Compiler {
         // Check for literal right operand to adjust opcode for immediate AND
         if (instruction.getRight() instanceof Literal) {
             opCode = 34; // Opcode for ANDI
-            float d = instruction.getRight().getMachineCodeFloatRepresentation();
-            retArrayList.add(DLX.assemble(opCode, a, b, (int) d));
-        } else {
-            retArrayList.add(DLX.assemble(opCode, a, b, c));
         }
+
+        retArrayList.add(DLX.assemble(opCode, a, b, c));
 
         // If the destination was spilled, store it back to memory
         if (destSpilled) {
@@ -3268,6 +3266,8 @@ public class Compiler {
         int b = instruction.getLeft().getMachineCodeRepresentation();
         int c = instruction.getRight().getMachineCodeRepresentation();
         boolean destSpilled = false;
+
+        System.out.println("Trying to or: " + opCode + ", " + a + ", " + b + ", c:" + instruction.getRight() + c);
 
         // Handle spilling for the left operand
         if (instruction.getLeft() instanceof Variable) {
@@ -3315,11 +3315,10 @@ public class Compiler {
         // Check for literal right operand to adjust opcode for immediate OR
         if (instruction.getRight() instanceof Literal) {
             opCode = 33; // Opcode for ORI
-            float d = instruction.getRight().getMachineCodeFloatRepresentation();
-            retArrayList.add(DLX.assemble(opCode, a, b, (int) d));
-        } else {
-            retArrayList.add(DLX.assemble(opCode, a, b, c));
         }
+        
+        System.out.println("Trying to or: " + opCode + ", " + a + ", " + b + ", c" + c);
+        retArrayList.add(DLX.assemble(opCode, a, b, c));
 
         // If the destination was spilled, store it back to memory
         if (destSpilled) {
