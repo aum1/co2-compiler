@@ -118,22 +118,22 @@ public class IRGenerator {
     }
 
     public void visit(FunctionCall node) {
-        System.out.println("Visiting FunctionCall: " + node.getFunctionName().token().lexeme());
+        // System.out.println("Visiting FunctionCall: " + node.getFunctionName().token().lexeme());
     
         if ((node.getFunctionName().token().lexeme().equals("printInt")) || (node.getFunctionName().token().lexeme().equals("printFloat")) || (node.getFunctionName().token().lexeme().equals("printBool"))
                 || (node.getFunctionName().token().lexeme().equals("readInt")) || (node.getFunctionName().token().lexeme().equals("readFloat")) || (node.getFunctionName().token().lexeme().equals("readBool")) || (node.getFunctionName().token().lexeme().equals("println"))) {
-            System.out.println("Entering standard function call");
+            // System.out.println("Entering standard function call");
             if (node.getArgumentList().getExpressionParameters().size() > 0) {
                 if (node.getArgumentList().getExpressionParameters().get(0) instanceof FunctionCall) {
                     visit(node.getArgumentList().getExpressionParameters().get(0));
                 }
             }
             currentInstructionList.addInstruction(new Call(TACList.getNextTACNumber(), node.getFunctionName(), node.getArgumentList()));
-            System.out.println("LatestVariable might not be updated by standard function calls");
+            // // System.out.println("LatestVariable might not be updated by standard function calls");
             return;
         }
     
-        System.out.println("Entering user-defined function call: " + node.getFunctionName().token().lexeme());
+        // System.out.println("Entering user-defined function call: " + node.getFunctionName().token().lexeme());
         BasicBlock functionBlock = functionBlocks.get(node.getFunctionName().token().lexeme());
         
         if (functionBlock == null) {
@@ -141,7 +141,7 @@ public class IRGenerator {
         } else {
             currentInstructionList.addInstruction(new Call(TACList.getNextTACNumber(), functionBlock, node.getFunctionName(), node.getArgumentList()));
             previousBlock.addSuccessor(functionBlock);
-            System.out.println("Function call added to currentInstructionList");
+            // System.out.println("Function call added to currentInstructionList");
         }
     }
     
@@ -370,9 +370,9 @@ public class IRGenerator {
 
     public void visit(Assignment node) {
         Variable dest = new Variable(node.getIdent());
-        System.out.println("Before visit: " + (currentInstructionList.getLatestVariable() != null ? currentInstructionList.getLatestVariable().toString() : "null"));
+        // System.out.println("Before visit: " + (currentInstructionList.getLatestVariable() != null ? currentInstructionList.getLatestVariable().toString() : "null"));
         visit(node.getRelation());
-        System.out.println("After visit: " + (currentInstructionList.getLatestVariable() != null ? currentInstructionList.getLatestVariable().toString() : "null"));
+        // System.out.println("After visit: " + (currentInstructionList.getLatestVariable() != null ? currentInstructionList.getLatestVariable().toString() : "null"));
         
         dest.setIsBool(currentInstructionList.getLatestVariable().isBool());
         dest.setIsFloat(currentInstructionList.getLatestVariable().isFloat());
@@ -502,7 +502,7 @@ public class IRGenerator {
     }
 
     public void visit(BoolLiteral node) {
-        // System.out.println("here");
+        // // System.out.println("here");
         Variable destination = new Variable(new Symbol(new Token("t" + BasicBlock.getNextTempNumber(), node.charPosition(), node.lineNumber())));
         Value rightValue = new Literal(node.getBoolean());
 
@@ -604,73 +604,73 @@ public class IRGenerator {
     }
 
     public Symbol visit(Expression node) {
-        System.out.println("Visiting expression of type: " + node.getClass().getSimpleName());
+        // System.out.println("Visiting expression of type: " + node.getClass().getSimpleName());
     
         if (node instanceof LogicalNot) {
-            System.out.println("Entering LogicalNot");
+            // System.out.println("Entering LogicalNot");
             visit((LogicalNot) node);
         }
         else if (node instanceof LogicalAnd) {
-            System.out.println("Entering LogicalAnd");
+            // System.out.println("Entering LogicalAnd");
             visit((LogicalAnd) node);
         }
         else if (node instanceof LogicalOr) {
-            System.out.println("Entering LogicalOr");
+            // System.out.println("Entering LogicalOr");
             visit((LogicalOr) node);
         }
         else if (node instanceof Power) {
-            System.out.println("Entering Power");
+            // System.out.println("Entering Power");
             visit((Power) node);
         }
         else if (node instanceof Multiplication) {
-            System.out.println("Entering Multiplication");
+            // System.out.println("Entering Multiplication");
             visit((Multiplication) node);
         }
         else if (node instanceof Division) {
-            System.out.println("Entering Division");
+            // System.out.println("Entering Division");
             visit((Division) node);
         }
         else if (node instanceof Modulo) {
-            System.out.println("Entering Modulo");
+            // System.out.println("Entering Modulo");
             visit((Modulo) node);
         }
         else if (node instanceof Addition) {
-            System.out.println("Entering Addition");
+            // System.out.println("Entering Addition");
             visit((Addition) node);
         }
         else if (node instanceof Subtraction) {
-            System.out.println("Entering Subtraction");
+            // System.out.println("Entering Subtraction");
             visit((Subtraction) node);
         }
         else if (node instanceof Relation) {
-            System.out.println("Entering Relation");
+            // System.out.println("Entering Relation");
             visit((Relation) node);
-            System.out.println("Returning symbol from Relation");
+            // System.out.println("Returning symbol from Relation");
             return ((Relation) node).getRelation();
         }
         else if (node instanceof IntegerLiteral) {
-            System.out.println("Entering IntegerLiteral");
+            // System.out.println("Entering IntegerLiteral");
             visit((IntegerLiteral) node);
         }
         else if (node instanceof FloatLiteral) {
-            System.out.println("Entering FloatLiteral");
+            // System.out.println("Entering FloatLiteral");
             visit((FloatLiteral) node);
         }
         else if (node instanceof BoolLiteral) {
-            System.out.println("Entering BoolLiteral");
+            // System.out.println("Entering BoolLiteral");
             visit((BoolLiteral) node);
         }
         else if (node instanceof VariableReference) {
-            System.out.println("Entering VariableReference");
+            // System.out.println("Entering VariableReference");
             visit((VariableReference) node);
         }
         else if (node instanceof FunctionCall) {
-            System.out.println("Entering FunctionCall");
+            // System.out.println("Entering FunctionCall");
             visit((FunctionCall) node);
         }
     
         // If reached here, it means no specific type was matched or no returnable symbol was found
-        System.out.println("No specific expression type matched or no symbol to return");
+        // System.out.println("No specific expression type matched or no symbol to return");
         return null;
     }
     
