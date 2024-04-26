@@ -2702,11 +2702,12 @@ public class Compiler {
             return returnList;
         }
         if (instruction instanceof And) {
-            toReturn.add(instructionToMachineCode((And) (instruction)));
+            ArrayList<Integer> returnList = instructionToMachineCode((And) (instruction));
+            return returnList;
         }
         if (instruction instanceof Or) {
-            toReturn.add(instructionToMachineCode((Or) (instruction)));
-        }
+            ArrayList<Integer> returnList = instructionToMachineCode((Or) (instruction));
+            return returnList;        }
         if (instruction instanceof BEQ) {
             ArrayList<Integer> retArrayList = instructionToMachineCode((BEQ) (instruction), instructionPosition, offset);
             return retArrayList;
@@ -2767,17 +2768,25 @@ public class Compiler {
         // assuming left is always a variable, check for spilling
         Variable leftVariable = (Variable) instruction.getLeft();
         if (leftVariable.getRegisterNumber() == -1) {
-            // if variable already has an offset, assuming at this point variable should already have one
-            retArrayList.add(DLX.assemble(40, leftSpilledRegister, 30, variableToOffset.get(leftVariable.getSymbol().token().lexeme())));
+            if (variableToOffset.containsKey(leftVariable.getSymbol().token().lexeme())) {
+                retArrayList.add(DLX.assemble(40, leftSpilledRegister, 30, variableToOffset.get(leftVariable.getSymbol().token().lexeme())));
+            } else {
+                variableToOffset.put(leftVariable.getSymbol().token().lexeme(), currentOffset);
+                currentOffset -= 1;  // Decrement the current offset to create a new space in memory
+                retArrayList.add(DLX.assemble(40, leftSpilledRegister, 30, variableToOffset.get(leftVariable.getSymbol().token().lexeme())));
+            }
             leftRegisterToSet = leftSpilledRegister;
         }
 
-        // if right is also a variable
+        // Handle spilling for the right operand
         if (instruction.getRight() instanceof Variable) {
             Variable rightVariable = (Variable) instruction.getRight();
             if (rightVariable.getRegisterNumber() == -1) {
-                // if variable already has an offset, assuming at this point variable should already have one
                 if (variableToOffset.containsKey(rightVariable.getSymbol().token().lexeme())) {
+                    retArrayList.add(DLX.assemble(40, rightSpilledRegister, 30, variableToOffset.get(rightVariable.getSymbol().token().lexeme())));
+                } else {
+                    variableToOffset.put(rightVariable.getSymbol().token().lexeme(), currentOffset);
+                    currentOffset -= 1;  // Decrement the current offset to create a new space in memory
                     retArrayList.add(DLX.assemble(40, rightSpilledRegister, 30, variableToOffset.get(rightVariable.getSymbol().token().lexeme())));
                 }
                 rightRegisterToSet = rightSpilledRegister;
@@ -2832,14 +2841,27 @@ public class Compiler {
 
         Variable leftVariable = (Variable) instruction.getLeft();
         if (leftVariable.getRegisterNumber() == -1) {
-            retArrayList.add(DLX.assemble(40, leftSpilledRegister, 30, variableToOffset.get(leftVariable.getSymbol().token().lexeme())));
+            if (variableToOffset.containsKey(leftVariable.getSymbol().token().lexeme())) {
+                retArrayList.add(DLX.assemble(40, leftSpilledRegister, 30, variableToOffset.get(leftVariable.getSymbol().token().lexeme())));
+            } else {
+                variableToOffset.put(leftVariable.getSymbol().token().lexeme(), currentOffset);
+                currentOffset -= 1;  // Decrement the current offset to create a new space in memory
+                retArrayList.add(DLX.assemble(40, leftSpilledRegister, 30, variableToOffset.get(leftVariable.getSymbol().token().lexeme())));
+            }
             leftRegisterToSet = leftSpilledRegister;
         }
 
+        // Handle spilling for the right operand
         if (instruction.getRight() instanceof Variable) {
             Variable rightVariable = (Variable) instruction.getRight();
             if (rightVariable.getRegisterNumber() == -1) {
-                retArrayList.add(DLX.assemble(40, rightSpilledRegister, 30, variableToOffset.get(rightVariable.getSymbol().token().lexeme())));
+                if (variableToOffset.containsKey(rightVariable.getSymbol().token().lexeme())) {
+                    retArrayList.add(DLX.assemble(40, rightSpilledRegister, 30, variableToOffset.get(rightVariable.getSymbol().token().lexeme())));
+                } else {
+                    variableToOffset.put(rightVariable.getSymbol().token().lexeme(), currentOffset);
+                    currentOffset -= 1;  // Decrement the current offset to create a new space in memory
+                    retArrayList.add(DLX.assemble(40, rightSpilledRegister, 30, variableToOffset.get(rightVariable.getSymbol().token().lexeme())));
+                }
                 rightRegisterToSet = rightSpilledRegister;
             }
         }
@@ -2888,17 +2910,29 @@ public class Compiler {
         int rightRegisterToSet = instruction.getRight().getMachineCodeRepresentation();
         boolean destSpilled = false;
 
-        // assume left is a variable, check for spilling 
         Variable leftVariable = (Variable) instruction.getLeft();
         if (leftVariable.getRegisterNumber() == -1) {
-            retArrayList.add(DLX.assemble(40, leftSpilledRegister, 30, variableToOffset.get(leftVariable.getSymbol().token().lexeme())));
+            if (variableToOffset.containsKey(leftVariable.getSymbol().token().lexeme())) {
+                retArrayList.add(DLX.assemble(40, leftSpilledRegister, 30, variableToOffset.get(leftVariable.getSymbol().token().lexeme())));
+            } else {
+                variableToOffset.put(leftVariable.getSymbol().token().lexeme(), currentOffset);
+                currentOffset -= 1;  // Decrement the current offset to create a new space in memory
+                retArrayList.add(DLX.assemble(40, leftSpilledRegister, 30, variableToOffset.get(leftVariable.getSymbol().token().lexeme())));
+            }
             leftRegisterToSet = leftSpilledRegister;
         }
 
+        // Handle spilling for the right operand
         if (instruction.getRight() instanceof Variable) {
             Variable rightVariable = (Variable) instruction.getRight();
             if (rightVariable.getRegisterNumber() == -1) {
-                retArrayList.add(DLX.assemble(40, rightSpilledRegister, 30, variableToOffset.get(rightVariable.getSymbol().token().lexeme())));
+                if (variableToOffset.containsKey(rightVariable.getSymbol().token().lexeme())) {
+                    retArrayList.add(DLX.assemble(40, rightSpilledRegister, 30, variableToOffset.get(rightVariable.getSymbol().token().lexeme())));
+                } else {
+                    variableToOffset.put(rightVariable.getSymbol().token().lexeme(), currentOffset);
+                    currentOffset -= 1;  // Decrement the current offset to create a new space in memory
+                    retArrayList.add(DLX.assemble(40, rightSpilledRegister, 30, variableToOffset.get(rightVariable.getSymbol().token().lexeme())));
+                }
                 rightRegisterToSet = rightSpilledRegister;
             }
         }
@@ -2951,14 +2985,27 @@ public class Compiler {
 
         Variable leftVariable = (Variable) instruction.getLeft();
         if (leftVariable.getRegisterNumber() == -1) {
-            retArrayList.add(DLX.assemble(40, leftSpilledRegister, 30, variableToOffset.get(leftVariable.getSymbol().token().lexeme())));
+            if (variableToOffset.containsKey(leftVariable.getSymbol().token().lexeme())) {
+                retArrayList.add(DLX.assemble(40, leftSpilledRegister, 30, variableToOffset.get(leftVariable.getSymbol().token().lexeme())));
+            } else {
+                variableToOffset.put(leftVariable.getSymbol().token().lexeme(), currentOffset);
+                currentOffset -= 1;  // Decrement the current offset to create a new space in memory
+                retArrayList.add(DLX.assemble(40, leftSpilledRegister, 30, variableToOffset.get(leftVariable.getSymbol().token().lexeme())));
+            }
             leftRegisterToSet = leftSpilledRegister;
         }
 
+        // Handle spilling for the right operand
         if (instruction.getRight() instanceof Variable) {
             Variable rightVariable = (Variable) instruction.getRight();
             if (rightVariable.getRegisterNumber() == -1) {
-                retArrayList.add(DLX.assemble(40, rightSpilledRegister, 30, variableToOffset.get(rightVariable.getSymbol().token().lexeme())));
+                if (variableToOffset.containsKey(rightVariable.getSymbol().token().lexeme())) {
+                    retArrayList.add(DLX.assemble(40, rightSpilledRegister, 30, variableToOffset.get(rightVariable.getSymbol().token().lexeme())));
+                } else {
+                    variableToOffset.put(rightVariable.getSymbol().token().lexeme(), currentOffset);
+                    currentOffset -= 1;  // Decrement the current offset to create a new space in memory
+                    retArrayList.add(DLX.assemble(40, rightSpilledRegister, 30, variableToOffset.get(rightVariable.getSymbol().token().lexeme())));
+                }
                 rightRegisterToSet = rightSpilledRegister;
             }
         }
@@ -3007,19 +3054,34 @@ public class Compiler {
         int rightRegisterToSet = instruction.getRight().getMachineCodeRepresentation();
         boolean destSpilled = false;
 
+        // Handle spilling for the left operand
         Variable leftVariable = (Variable) instruction.getLeft();
         if (leftVariable.getRegisterNumber() == -1) {
-            retArrayList.add(DLX.assemble(40, leftSpilledRegister, 30, variableToOffset.get(leftVariable.getSymbol().token().lexeme())));
+            if (variableToOffset.containsKey(leftVariable.getSymbol().token().lexeme())) {
+                retArrayList.add(DLX.assemble(40, leftSpilledRegister, 30, variableToOffset.get(leftVariable.getSymbol().token().lexeme())));
+            } else {
+                variableToOffset.put(leftVariable.getSymbol().token().lexeme(), currentOffset);
+                currentOffset -= 1;  // Decrement the current offset to create a new space in memory
+                retArrayList.add(DLX.assemble(40, leftSpilledRegister, 30, variableToOffset.get(leftVariable.getSymbol().token().lexeme())));
+            }
             leftRegisterToSet = leftSpilledRegister;
         }
 
+        // Handle spilling for the right operand
         if (instruction.getRight() instanceof Variable) {
             Variable rightVariable = (Variable) instruction.getRight();
             if (rightVariable.getRegisterNumber() == -1) {
-                retArrayList.add(DLX.assemble(40, rightSpilledRegister, 30, variableToOffset.get(rightVariable.getSymbol().token().lexeme())));
+                if (variableToOffset.containsKey(rightVariable.getSymbol().token().lexeme())) {
+                    retArrayList.add(DLX.assemble(40, rightSpilledRegister, 30, variableToOffset.get(rightVariable.getSymbol().token().lexeme())));
+                } else {
+                    variableToOffset.put(rightVariable.getSymbol().token().lexeme(), currentOffset);
+                    currentOffset -= 1;  // Decrement the current offset to create a new space in memory
+                    retArrayList.add(DLX.assemble(40, rightSpilledRegister, 30, variableToOffset.get(rightVariable.getSymbol().token().lexeme())));
+                }
                 rightRegisterToSet = rightSpilledRegister;
             }
         }
+
 
         Variable destVariable = instruction.getDest();
         if (destVariable.getRegisterNumber() == -1) {
@@ -3065,19 +3127,32 @@ public class Compiler {
         int rightRegisterToSet = instruction.getRight().getMachineCodeRepresentation();
         boolean destSpilled = false;
 
+        // Handle spilling for the left operand
         Variable leftVariable = (Variable) instruction.getLeft();
         if (leftVariable.getRegisterNumber() == -1) {
-            retArrayList.add(DLX.assemble(40, leftSpilledRegister, 30, variableToOffset.get(leftVariable.getSymbol().token().lexeme())));
+            if (variableToOffset.containsKey(leftVariable.getSymbol().token().lexeme())) {
+                retArrayList.add(DLX.assemble(40, leftSpilledRegister, 30, variableToOffset.get(leftVariable.getSymbol().token().lexeme())));
+            } else {
+                variableToOffset.put(leftVariable.getSymbol().token().lexeme(), currentOffset);
+                currentOffset -= 1;  // Decrement the current offset to create a new space in memory
+                retArrayList.add(DLX.assemble(40, leftSpilledRegister, 30, variableToOffset.get(leftVariable.getSymbol().token().lexeme())));
+            }
             leftRegisterToSet = leftSpilledRegister;
         }
 
-        if (instruction.getRight() instanceof Variable) {
-            Variable rightVariable = (Variable) instruction.getRight();
-            if (rightVariable.getRegisterNumber() == -1) {
+        // Handle spilling for the right operand
+        Variable rightVariable = (Variable) instruction.getRight();
+        if (rightVariable.getRegisterNumber() == -1) {
+            if (variableToOffset.containsKey(rightVariable.getSymbol().token().lexeme())) {
                 retArrayList.add(DLX.assemble(40, rightSpilledRegister, 30, variableToOffset.get(rightVariable.getSymbol().token().lexeme())));
-                rightRegisterToSet = rightSpilledRegister;
+            } else {
+                variableToOffset.put(rightVariable.getSymbol().token().lexeme(), currentOffset);
+                currentOffset -= 1;  // Decrement the current offset to create a new space in memory
+                retArrayList.add(DLX.assemble(40, rightSpilledRegister, 30, variableToOffset.get(rightVariable.getSymbol().token().lexeme())));
             }
+            rightRegisterToSet = rightSpilledRegister;
         }
+
 
         Variable destVariable = instruction.getDest();
         if (destVariable.getRegisterNumber() == -1) {
@@ -3106,40 +3181,138 @@ public class Compiler {
     }
     
 
-    public int instructionToMachineCode(And instruction) {
-        int opCode, a, b, c;
-        opCode = 14; // Default opcode for AND a,b,c
-        a = instruction.getDest().getMachineCodeRepresentation();
-        b = instruction.getLeft().getMachineCodeRepresentation();
-        c = instruction.getRight().getMachineCodeRepresentation();
-    
-        if (instruction.getRight() instanceof Literal) {
-            // ANDI - AND with immediate
-            opCode = 34; // Opcode for ANDI
-            float d = instruction.getRight().getMachineCodeFloatRepresentation();
-            return DLX.assemble(opCode, a, b, d);
+   public ArrayList<Integer> instructionToMachineCode(And instruction) {
+    ArrayList<Integer> retArrayList = new ArrayList<>();
+    int opCode = 14; // Default opcode for AND a, b, c
+    int a = instruction.getDest().getMachineCodeRepresentation();
+    int b = instruction.getLeft().getMachineCodeRepresentation();
+    int c = instruction.getRight().getMachineCodeRepresentation();
+    boolean destSpilled = false;
+
+    // Handle spilling for the left operand
+    if (instruction.getLeft() instanceof Variable) {
+        Variable leftVariable = (Variable) instruction.getLeft();
+        if (leftVariable.getRegisterNumber() == -1) {
+            retArrayList.add(DLX.assemble(40, leftSpilledRegister, 30, variableToOffset.get(leftVariable.getSymbol().token().lexeme())));
+            b = leftSpilledRegister;
         }
-    
-        return DLX.assemble(opCode, a, b, c);
     }
+
+    // Handle spilling for the right operand
+    if (instruction.getRight() instanceof Variable) {
+        Variable rightVariable = (Variable) instruction.getRight();
+        if (rightVariable.getRegisterNumber() == -1) {
+            if (variableToOffset.containsKey(rightVariable.getSymbol().token().lexeme())) {
+                retArrayList.add(DLX.assemble(40, rightSpilledRegister, 30, variableToOffset.get(rightVariable.getSymbol().token().lexeme())));
+            } else {
+                variableToOffset.put(rightVariable.getSymbol().token().lexeme(), currentOffset);
+                currentOffset -= 1;  // Decrement the current offset to create a new space in memory
+                retArrayList.add(DLX.assemble(40, rightSpilledRegister, 30, variableToOffset.get(rightVariable.getSymbol().token().lexeme())));
+            }
+            c = rightSpilledRegister;
+        }
+    }
+
+    // Handle spilling for the destination operand
+    Variable destVariable = instruction.getDest();
+    if (destVariable.getRegisterNumber() == -1) {
+        if (variableToOffset.containsKey(destVariable.getSymbol().token().lexeme())) {
+            retArrayList.add(DLX.assemble(40, destSpilledRegister, 30, variableToOffset.get(destVariable.getSymbol().token().lexeme())));
+        } else {
+            variableToOffset.put(destVariable.getSymbol().token().lexeme(), currentOffset);
+            currentOffset -= 1;
+        }
+        destSpilled = true;
+        a = destSpilledRegister;
+    }
+
+    // Check for literal right operand to adjust opcode for immediate AND
+    if (instruction.getRight() instanceof Literal) {
+        opCode = 34; // Opcode for ANDI
+        float d = instruction.getRight().getMachineCodeFloatRepresentation();
+        retArrayList.add(DLX.assemble(opCode, a, b, (int) d));
+    } else {
+        retArrayList.add(DLX.assemble(opCode, a, b, c));
+    }
+
+    // If the destination was spilled, store it back to memory
+    if (destSpilled) {
+        retArrayList.add(DLX.assemble(43, a, 30, variableToOffset.get(instruction.getDest().getSymbol().token().lexeme())));
+    }
+
+    return retArrayList;
+}
+
     
 
-    public int instructionToMachineCode(Or instruction) {
-        int opCode, a, b, c;
-        opCode = 13; // Default opcode for OR a,b,c
-        a = instruction.getDest().getMachineCodeRepresentation();
-        b = instruction.getLeft().getMachineCodeRepresentation();
-        c = instruction.getRight().getMachineCodeRepresentation();
-    
-        if (instruction.getRight() instanceof Literal) {
-            // ORI - OR with immediate
-            opCode = 33; // Opcode for ORI
-            float d = instruction.getRight().getMachineCodeFloatRepresentation();
-            return DLX.assemble(opCode, a, b, d);
+public ArrayList<Integer> instructionToMachineCode(Or instruction) {
+    ArrayList<Integer> retArrayList = new ArrayList<>();
+    int opCode = 13; // Default opcode for OR a, b, c
+    int a = instruction.getDest().getMachineCodeRepresentation();
+    int b = instruction.getLeft().getMachineCodeRepresentation();
+    int c = instruction.getRight().getMachineCodeRepresentation();
+    boolean destSpilled = false;
+
+    // Handle spilling for the left operand
+    if (instruction.getLeft() instanceof Variable) {
+        Variable leftVariable = (Variable) instruction.getLeft();
+        if (leftVariable.getRegisterNumber() == -1) {
+            if (variableToOffset.containsKey(leftVariable.getSymbol().token().lexeme())) {
+                retArrayList.add(DLX.assemble(40, leftSpilledRegister, 30, variableToOffset.get(leftVariable.getSymbol().token().lexeme())));
+            } else {
+                variableToOffset.put(leftVariable.getSymbol().token().lexeme(), currentOffset);
+                currentOffset -= 1;  // Decrement the current offset to create a new space in memory
+                retArrayList.add(DLX.assemble(40, leftSpilledRegister, 30, variableToOffset.get(leftVariable.getSymbol().token().lexeme())));
+            }
+            b = leftSpilledRegister;
         }
-    
-        return DLX.assemble(opCode, a, b, c);
     }
+
+
+    if (instruction.getRight() instanceof Variable) {
+        Variable rightVariable = (Variable) instruction.getRight();
+        if (rightVariable.getRegisterNumber() == -1) {
+            if (variableToOffset.containsKey(rightVariable.getSymbol().token().lexeme())) {
+                retArrayList.add(DLX.assemble(40, rightSpilledRegister, 30, variableToOffset.get(rightVariable.getSymbol().token().lexeme())));
+            } else {
+                variableToOffset.put(rightVariable.getSymbol().token().lexeme(), currentOffset);
+                currentOffset -= 1;  // Decrement the current offset to create a new space in memory
+                retArrayList.add(DLX.assemble(40, rightSpilledRegister, 30, variableToOffset.get(rightVariable.getSymbol().token().lexeme())));
+            }
+            c = rightSpilledRegister;
+        }
+    }
+
+    // Handle spilling for the destination operand
+    Variable destVariable = instruction.getDest();
+    if (destVariable.getRegisterNumber() == -1) {
+        if (variableToOffset.containsKey(destVariable.getSymbol().token().lexeme())) {
+            retArrayList.add(DLX.assemble(40, destSpilledRegister, 30, variableToOffset.get(destVariable.getSymbol().token().lexeme())));
+        } else {
+            variableToOffset.put(destVariable.getSymbol().token().lexeme(), currentOffset);
+            currentOffset -= 1;
+        }
+        destSpilled = true;
+        a = destSpilledRegister;
+    }
+
+    // Check for literal right operand to adjust opcode for immediate OR
+    if (instruction.getRight() instanceof Literal) {
+        opCode = 33; // Opcode for ORI
+        float d = instruction.getRight().getMachineCodeFloatRepresentation();
+        retArrayList.add(DLX.assemble(opCode, a, b, (int) d));
+    } else {
+        retArrayList.add(DLX.assemble(opCode, a, b, c));
+    }
+
+    // If the destination was spilled, store it back to memory
+    if (destSpilled) {
+        retArrayList.add(DLX.assemble(43, a, 30, variableToOffset.get(instruction.getDest().getSymbol().token().lexeme())));
+    }
+
+    return retArrayList;
+}
+
     
     public ArrayList<Integer> instructionToMachineCode (BEQ node, int instructionPosition, int offset) {
         ArrayList<Integer> toReturn = new ArrayList<>();
