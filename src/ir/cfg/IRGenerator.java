@@ -294,8 +294,9 @@ public class IRGenerator {
 
         // if else block, then get list of else instructions
         previousBlock.addSuccessor(relationBlock, "while condition");
-        relationBlock.addSuccessor(statSeqBlock, "Branch inside while loop");
         relationBlock.addSuccessor(blockAfterWhile, "Fall through");
+        relationBlock.addSuccessor(statSeqBlock, "Branch inside while loop");
+       
         // statSeqBlock.addSuccessor(blockAfterWhile);
         statSeqBlock.addSuccessor(relationBlock, "Loop condition");
 
@@ -335,6 +336,7 @@ public class IRGenerator {
             }
         }
 
+        blockAfterWhile.addInstruction(new BRA(TACList.getNextTACNumber(), blockAfterWhile));
         statSeqBlock.addInstruction(new BRA(TACList.getNextTACNumber(), relationBlock));
         
         previousBlock = blockAfterWhile;
