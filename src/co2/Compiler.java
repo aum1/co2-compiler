@@ -2671,7 +2671,6 @@ public class Compiler {
     
     public ArrayList<Integer> instructionToMachineCode(TAC instruction, int instructionPosition, int offset) {
         ArrayList<Integer> toReturn = new ArrayList<>();
-        System.out.println(instruction.getID());
         if (instruction instanceof Add) {
             // System.out.println("Add");
             ArrayList<Integer> returnList = instructionToMachineCode((Add) (instruction));
@@ -2979,6 +2978,8 @@ public class Compiler {
         boolean leftSpilled = false;
         boolean rightSpilled = false;
 
+        System.out.println("Attempting to div " + instruction.getDest() + ":" + destRegisterToSet + " = " + instruction.getLeft() + ":" + leftRegisterToSet + "+" + instruction.getRight() + ":" + rightRegisterToSet);
+
         Variable leftVariable = (Variable) instruction.getLeft();
         if (leftVariable.getRegisterNumber() == -1) {
             retArrayList.add(DLX.assemble(40, leftSpilledRegister, 30, variableToOffset.get(leftVariable.getSymbol().token().lexeme())));
@@ -3007,7 +3008,7 @@ public class Compiler {
             destSpilled = true;
             destRegisterToSet = destSpilledRegister;
         }
-    
+
         if (instruction.getRight().isFloat() && instruction.getRight() instanceof Literal) {
             opCode = 30;
             float d = instruction.getRight().getMachineCodeFloatRepresentation();
@@ -3020,7 +3021,7 @@ public class Compiler {
             opCode = 23;
         }
     
-        retArrayList.add(DLX.assemble(opCode, destRegisterToSet, leftRegisterToSet, rightSpilledRegister));
+        retArrayList.add(DLX.assemble(opCode, destRegisterToSet, leftRegisterToSet, rightRegisterToSet));
 
         if (leftSpilled) {
             retArrayList.add(DLX.assemble(43, leftRegisterToSet, 30, variableToOffset.get(instruction.getLeft().getSymbol().token().lexeme())));
