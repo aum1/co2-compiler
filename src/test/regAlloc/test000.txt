@@ -1,22 +1,12 @@
-// Tests Function Calls -- Proper return value, proper argument values, saved registers
-
+// cf
 main
-
-int a, b, c;
-
-function foo(int x, int y) : int {
-  x += 5;
-  y -= 2;
-  return x + y;
-};
+float x, y;
 
 {
-  a = call readInt(); 
-  c = 2;
-
-  b = call foo(a, c); // return a + 5 + c - 2
-  call printInt(b); 
-
-  call printInt( a + c ); // Should print a + 2
-
+    x = 1.0 * 2.0 - 0.5;
+    call printFloat(x);
+    call println();
+    y = x / 0.25;
+    call printFloat(y);
+    call println();
 }.

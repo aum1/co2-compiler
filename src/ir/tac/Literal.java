@@ -28,8 +28,15 @@ public class Literal implements Value {
 
     @Override
     public int getMachineCodeRepresentation() {
-        return Integer.valueOf(val.token().lexeme());
+        String lexeme = val.token().lexeme();
+        try {
+            float floatValue = Float.parseFloat(lexeme);
+            return (int) floatValue;
+        } catch (NumberFormatException e) {
+            throw new NumberFormatException("Invalid format for integer conversion: " + lexeme);
+        }
     }
+
 
     @Override
     public float getMachineCodeFloatRepresentation() {
