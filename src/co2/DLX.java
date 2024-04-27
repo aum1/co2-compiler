@@ -202,8 +202,6 @@ public class DLX {
                         }
                         break;
                     case LDW:
-                        R[a] = M[((R[b]) / 4) + c];
-                            break;
                     case LDX:
                         R[a] = M[(R[b] + c) / 4];
                         break;
@@ -212,8 +210,6 @@ public class DLX {
                         R[b] = R[b] + c;
                         break;
                     case STW:
-                        M[((R[b]) / 4) + c] = R[a];
-                        break;
                     case STX:
                         M[(R[b] + c) / 4] = R[a];
                         break;

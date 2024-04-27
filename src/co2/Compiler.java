@@ -2787,7 +2787,7 @@ public class Compiler {
                 retArrayList.add(DLX.assemble(40, leftSpilledRegister, 30, variableToOffset.get(leftVariable.getSymbol().token().lexeme())));
             } else {
                 variableToOffset.put(leftVariable.getSymbol().token().lexeme(), currentOffset);
-                currentOffset -= 1;  // Decrement the current offset to create a new space in memory
+                currentOffset -= 4;  // Decrement the current offset to create a new space in memory
                 retArrayList.add(DLX.assemble(40, leftSpilledRegister, 30, variableToOffset.get(leftVariable.getSymbol().token().lexeme())));
             }
             leftRegisterToSet = leftSpilledRegister;
@@ -2801,7 +2801,7 @@ public class Compiler {
                     retArrayList.add(DLX.assemble(40, rightSpilledRegister, 30, variableToOffset.get(rightVariable.getSymbol().token().lexeme())));
                 } else {
                     variableToOffset.put(rightVariable.getSymbol().token().lexeme(), currentOffset);
-                    currentOffset -= 1;  // Decrement the current offset to create a new space in memory
+                    currentOffset -= 4;  // Decrement the current offset to create a new space in memory
                     retArrayList.add(DLX.assemble(40, rightSpilledRegister, 30, variableToOffset.get(rightVariable.getSymbol().token().lexeme())));
                 }
                 rightRegisterToSet = rightSpilledRegister;
@@ -2816,7 +2816,7 @@ public class Compiler {
             else {
                 // might be the first value
                 variableToOffset.put(instruction.getDest().getSymbol().token().lexeme(), currentOffset);
-                currentOffset -= 1;
+                currentOffset -= 4;
             }
             destSpilled = true;
             destRegisterToSet = destSpilledRegister;
@@ -2860,7 +2860,7 @@ public class Compiler {
                 retArrayList.add(DLX.assemble(40, leftSpilledRegister, 30, variableToOffset.get(leftVariable.getSymbol().token().lexeme())));
             } else {
                 variableToOffset.put(leftVariable.getSymbol().token().lexeme(), currentOffset);
-                currentOffset -= 1;  // Decrement the current offset to create a new space in memory
+                currentOffset -= 4;  // Decrement the current offset to create a new space in memory
                 retArrayList.add(DLX.assemble(40, leftSpilledRegister, 30, variableToOffset.get(leftVariable.getSymbol().token().lexeme())));
             }
             leftRegisterToSet = leftSpilledRegister;
@@ -2874,7 +2874,7 @@ public class Compiler {
                     retArrayList.add(DLX.assemble(40, rightSpilledRegister, 30, variableToOffset.get(rightVariable.getSymbol().token().lexeme())));
                 } else {
                     variableToOffset.put(rightVariable.getSymbol().token().lexeme(), currentOffset);
-                    currentOffset -= 1;  // Decrement the current offset to create a new space in memory
+                    currentOffset -= 4;  // Decrement the current offset to create a new space in memory
                     retArrayList.add(DLX.assemble(40, rightSpilledRegister, 30, variableToOffset.get(rightVariable.getSymbol().token().lexeme())));
                 }
                 rightRegisterToSet = rightSpilledRegister;
@@ -2888,7 +2888,7 @@ public class Compiler {
             }
             else {
                 variableToOffset.put(destVariable.getSymbol().token().lexeme(), currentOffset);
-                currentOffset -= 1;
+                currentOffset -= 4;
             }
             destSpilled = true;
             destRegisterToSet = destSpilledRegister;
@@ -2931,7 +2931,7 @@ public class Compiler {
                 retArrayList.add(DLX.assemble(40, leftSpilledRegister, 30, variableToOffset.get(leftVariable.getSymbol().token().lexeme())));
             } else {
                 variableToOffset.put(leftVariable.getSymbol().token().lexeme(), currentOffset);
-                currentOffset -= 1;  // Decrement the current offset to create a new space in memory
+                currentOffset -= 4;  // Decrement the current offset to create a new space in memory
                 retArrayList.add(DLX.assemble(40, leftSpilledRegister, 30, variableToOffset.get(leftVariable.getSymbol().token().lexeme())));
             }
             leftRegisterToSet = leftSpilledRegister;
@@ -2945,7 +2945,7 @@ public class Compiler {
                     retArrayList.add(DLX.assemble(40, rightSpilledRegister, 30, variableToOffset.get(rightVariable.getSymbol().token().lexeme())));
                 } else {
                     variableToOffset.put(rightVariable.getSymbol().token().lexeme(), currentOffset);
-                    currentOffset -= 1;  // Decrement the current offset to create a new space in memory
+                    currentOffset -= 4;  // Decrement the current offset to create a new space in memory
                     retArrayList.add(DLX.assemble(40, rightSpilledRegister, 30, variableToOffset.get(rightVariable.getSymbol().token().lexeme())));
                 }
                 rightRegisterToSet = rightSpilledRegister;
@@ -2959,7 +2959,7 @@ public class Compiler {
             }
             else {
                 variableToOffset.put(destVariable.getSymbol().token().lexeme(), currentOffset);
-                currentOffset -= 1;
+                currentOffset -= 4;
             }
             destSpilled = true;
             destRegisterToSet = destSpilledRegister;
@@ -3004,7 +3004,7 @@ public class Compiler {
                 retArrayList.add(DLX.assemble(40, leftSpilledRegister, 30, variableToOffset.get(leftVariable.getSymbol().token().lexeme())));
             } else {
                 variableToOffset.put(leftVariable.getSymbol().token().lexeme(), currentOffset);
-                currentOffset -= 1;  // Decrement the current offset to create a new space in memory
+                currentOffset -= 4;  // Decrement the current offset to create a new space in memory
                 retArrayList.add(DLX.assemble(40, leftSpilledRegister, 30, variableToOffset.get(leftVariable.getSymbol().token().lexeme())));
             }
             leftRegisterToSet = leftSpilledRegister;
@@ -3018,7 +3018,7 @@ public class Compiler {
                     retArrayList.add(DLX.assemble(40, rightSpilledRegister, 30, variableToOffset.get(rightVariable.getSymbol().token().lexeme())));
                 } else {
                     variableToOffset.put(rightVariable.getSymbol().token().lexeme(), currentOffset);
-                    currentOffset -= 1;  // Decrement the current offset to create a new space in memory
+                    currentOffset -= 4;  // Decrement the current offset to create a new space in memory
                     retArrayList.add(DLX.assemble(40, rightSpilledRegister, 30, variableToOffset.get(rightVariable.getSymbol().token().lexeme())));
                 }
                 rightRegisterToSet = rightSpilledRegister;
@@ -3032,7 +3032,7 @@ public class Compiler {
             }
             else {
                 variableToOffset.put(destVariable.getSymbol().token().lexeme(), currentOffset);
-                currentOffset -= 1;
+                currentOffset -= 4;
             }
             destSpilled = true;
             destRegisterToSet = destSpilledRegister;
@@ -3076,7 +3076,7 @@ public class Compiler {
                 retArrayList.add(DLX.assemble(40, leftSpilledRegister, 30, variableToOffset.get(leftVariable.getSymbol().token().lexeme())));
             } else {
                 variableToOffset.put(leftVariable.getSymbol().token().lexeme(), currentOffset);
-                currentOffset -= 1;  // Decrement the current offset to create a new space in memory
+                currentOffset -= 4;  // Decrement the current offset to create a new space in memory
                 retArrayList.add(DLX.assemble(40, leftSpilledRegister, 30, variableToOffset.get(leftVariable.getSymbol().token().lexeme())));
             }
             leftRegisterToSet = leftSpilledRegister;
@@ -3090,7 +3090,7 @@ public class Compiler {
                     retArrayList.add(DLX.assemble(40, rightSpilledRegister, 30, variableToOffset.get(rightVariable.getSymbol().token().lexeme())));
                 } else {
                     variableToOffset.put(rightVariable.getSymbol().token().lexeme(), currentOffset);
-                    currentOffset -= 1;  // Decrement the current offset to create a new space in memory
+                    currentOffset -= 4;  // Decrement the current offset to create a new space in memory
                     retArrayList.add(DLX.assemble(40, rightSpilledRegister, 30, variableToOffset.get(rightVariable.getSymbol().token().lexeme())));
                 }
                 rightRegisterToSet = rightSpilledRegister;
@@ -3105,7 +3105,7 @@ public class Compiler {
             }
             else {
                 variableToOffset.put(destVariable.getSymbol().token().lexeme(), currentOffset);
-                currentOffset -= 1;
+                currentOffset -= 4;
             }
             destSpilled = true;
             destRegisterToSet = destSpilledRegister;
@@ -3149,7 +3149,7 @@ public class Compiler {
                 retArrayList.add(DLX.assemble(40, leftSpilledRegister, 30, variableToOffset.get(leftVariable.getSymbol().token().lexeme())));
             } else {
                 variableToOffset.put(leftVariable.getSymbol().token().lexeme(), currentOffset);
-                currentOffset -= 1;  // Decrement the current offset to create a new space in memory
+                currentOffset -= 4;  // Decrement the current offset to create a new space in memory
                 retArrayList.add(DLX.assemble(40, leftSpilledRegister, 30, variableToOffset.get(leftVariable.getSymbol().token().lexeme())));
             }
             leftRegisterToSet = leftSpilledRegister;
@@ -3162,7 +3162,7 @@ public class Compiler {
                 retArrayList.add(DLX.assemble(40, rightSpilledRegister, 30, variableToOffset.get(rightVariable.getSymbol().token().lexeme())));
             } else {
                 variableToOffset.put(rightVariable.getSymbol().token().lexeme(), currentOffset);
-                currentOffset -= 1;  // Decrement the current offset to create a new space in memory
+                currentOffset -= 4;  // Decrement the current offset to create a new space in memory
                 retArrayList.add(DLX.assemble(40, rightSpilledRegister, 30, variableToOffset.get(rightVariable.getSymbol().token().lexeme())));
             }
             rightRegisterToSet = rightSpilledRegister;
@@ -3176,7 +3176,7 @@ public class Compiler {
             }
             else {
                 variableToOffset.put(destVariable.getSymbol().token().lexeme(), currentOffset);
-                currentOffset -= 1;
+                currentOffset -= 4;
             }
             destSpilled = true;
             destRegisterToSet = destSpilledRegister;
@@ -3222,7 +3222,7 @@ public class Compiler {
                     retArrayList.add(DLX.assemble(40, rightSpilledRegister, 30, variableToOffset.get(rightVariable.getSymbol().token().lexeme())));
                 } else {
                     variableToOffset.put(rightVariable.getSymbol().token().lexeme(), currentOffset);
-                    currentOffset -= 1;  // Decrement the current offset to create a new space in memory
+                    currentOffset -= 4;  // Decrement the current offset to create a new space in memory
                     retArrayList.add(DLX.assemble(40, rightSpilledRegister, 30, variableToOffset.get(rightVariable.getSymbol().token().lexeme())));
                 }
                 c = rightSpilledRegister;
@@ -3236,7 +3236,7 @@ public class Compiler {
                 retArrayList.add(DLX.assemble(40, destSpilledRegister, 30, variableToOffset.get(destVariable.getSymbol().token().lexeme())));
             } else {
                 variableToOffset.put(destVariable.getSymbol().token().lexeme(), currentOffset);
-                currentOffset -= 1;
+                currentOffset -= 4;
             }
             destSpilled = true;
             a = destSpilledRegister;
@@ -3277,7 +3277,7 @@ public class Compiler {
                     retArrayList.add(DLX.assemble(40, leftSpilledRegister, 30, variableToOffset.get(leftVariable.getSymbol().token().lexeme())));
                 } else {
                     variableToOffset.put(leftVariable.getSymbol().token().lexeme(), currentOffset);
-                    currentOffset -= 1;  // Decrement the current offset to create a new space in memory
+                    currentOffset -= 4;  // Decrement the current offset to create a new space in memory
                     retArrayList.add(DLX.assemble(40, leftSpilledRegister, 30, variableToOffset.get(leftVariable.getSymbol().token().lexeme())));
                 }
                 b = leftSpilledRegister;
@@ -3292,7 +3292,7 @@ public class Compiler {
                     retArrayList.add(DLX.assemble(40, rightSpilledRegister, 30, variableToOffset.get(rightVariable.getSymbol().token().lexeme())));
                 } else {
                     variableToOffset.put(rightVariable.getSymbol().token().lexeme(), currentOffset);
-                    currentOffset -= 1;  // Decrement the current offset to create a new space in memory
+                    currentOffset -= 4;  // Decrement the current offset to create a new space in memory
                     retArrayList.add(DLX.assemble(40, rightSpilledRegister, 30, variableToOffset.get(rightVariable.getSymbol().token().lexeme())));
                 }
                 c = rightSpilledRegister;
@@ -3306,7 +3306,7 @@ public class Compiler {
                 retArrayList.add(DLX.assemble(40, destSpilledRegister, 30, variableToOffset.get(destVariable.getSymbol().token().lexeme())));
             } else {
                 variableToOffset.put(destVariable.getSymbol().token().lexeme(), currentOffset);
-                currentOffset -= 1;
+                currentOffset -= 4;
             }
             destSpilled = true;
             a = destSpilledRegister;
@@ -3502,7 +3502,7 @@ public class Compiler {
                 retArrayList.add(DLX.assemble(40, leftSpilledRegister, 30, variableToOffset.get(leftVariable.getSymbol().token().lexeme())));
             } else {
                 variableToOffset.put(leftVariable.getSymbol().token().lexeme(), currentOffset);
-                currentOffset -= 1;  // Decrement the current offset to create a new space in memory
+                currentOffset -= 4;  // Decrement the current offset to create a new space in memory
                 retArrayList.add(DLX.assemble(40, leftSpilledRegister, 30, variableToOffset.get(leftVariable.getSymbol().token().lexeme())));
             }
             leftRegisterToSet = leftSpilledRegister;
@@ -3516,7 +3516,7 @@ public class Compiler {
                     retArrayList.add(DLX.assemble(40, rightSpilledRegister, 30, variableToOffset.get(rightVariable.getSymbol().token().lexeme())));
                 } else {
                     variableToOffset.put(rightVariable.getSymbol().token().lexeme(), currentOffset);
-                    currentOffset -= 1;  // Decrement the current offset to create a new space in memory
+                    currentOffset -= 4;  // Decrement the current offset to create a new space in memory
                     retArrayList.add(DLX.assemble(40, rightSpilledRegister, 30, variableToOffset.get(rightVariable.getSymbol().token().lexeme())));
                 }
                 rightRegisterToSet = rightSpilledRegister;
@@ -3530,7 +3530,7 @@ public class Compiler {
             }
             else {
                 variableToOffset.put(destVariable.getSymbol().token().lexeme(), currentOffset);
-                currentOffset -= 1;
+                currentOffset -= 4;
             }
             destSpilled = true;
             destRegisterToSet = destSpilledRegister;
@@ -3574,7 +3574,7 @@ public class Compiler {
             else {
                 // System.out.println("var " + node.getDest() + " has not offset");
                 variableToOffset.put(node.getDest().getSymbol().token().lexeme(), currentOffset);
-                currentOffset -= 1;
+                currentOffset -= 4;
             }
             
             isSpilled = true;
