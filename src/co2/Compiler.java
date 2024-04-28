@@ -10,6 +10,8 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.security.GeneralSecurityException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -72,6 +74,7 @@ import ir.tac.BLT;
 import ir.tac.BNE;
 import ir.tac.BRA;
 import ir.tac.Call;
+import ir.tac.Comparison;
 import ir.tac.Div;
 import ir.tac.End;
 import ir.tac.Literal;
@@ -874,6 +877,7 @@ public class Compiler {
 
 // Type Checker ==============================================================
     // computation	= "main" {varDecl} {funcDecl} "{" statSeq "}" "."
+    Map<String, String> miniVarialeDeclarationList = new HashMap<>();
     private Computation computation () {
         Token mainToken = expectRetrieve(Token.Kind.MAIN);
 
@@ -888,6 +892,7 @@ public class Compiler {
                 Token ident = expectRetrieve(Token.Kind.IDENT);
                 // Token ident = designator();
                 variables.addDeclaration(new VariableDeclaration(type.lineNumber(), type.charPosition(), new Symbol(ident), new Symbol(type)));
+                miniVarialeDeclarationList.put(ident.lexeme(), type.kind().toString());
             } while (accept(Token.Kind.COMMA));
 
             expect(Token.Kind.SEMICOLON);
@@ -997,6 +1002,7 @@ public class Compiler {
                 Token ident = expectRetrieve(Token.Kind.IDENT);
                 // Token ident = designator();
                 varDecl.addDeclaration(new VariableDeclaration(type.lineNumber(), type.charPosition(), new Symbol(ident), new Symbol(type)));
+                miniVarialeDeclarationList.put(ident.lexeme(), type.kind().toString());
             } while (accept(Token.Kind.COMMA));
 
             expect(Token.Kind.SEMICOLON);
@@ -1087,15 +1093,19 @@ public class Compiler {
         } else {
             Token terminal =  matchNonTerminal(NonTerminal.UNARY_OP);
             if (terminal.is(Token.Kind.UNI_INC)) {
+                VariableReference varReferenceNode = new VariableReference(designatorToken.lineNumber(), designatorToken.charPosition(), new Symbol(designatorToken));
+                varReferenceNode.setIsInt(true);
                 return new Assignment(designatorToken.lineNumber(), designatorToken.charPosition(), new Symbol(designatorToken), new Symbol(terminal),
                 new Addition(designatorToken.lineNumber(), designatorToken.charPosition(), new Symbol(new Token("+", 0, 0)), 
-                    new VariableReference(designatorToken.lineNumber(), designatorToken.charPosition(), new Symbol(designatorToken)), 
+                    varReferenceNode, 
                         new IntegerLiteral(designatorToken.lineNumber(), designatorToken.charPosition(),  new Symbol(new Token("1", 0, 0)))));
             }
             else {
+                VariableReference varReferenceNode = new VariableReference(designatorToken.lineNumber(), designatorToken.charPosition(), new Symbol(designatorToken));
+                varReferenceNode.setIsInt(true);
                 return new Assignment(designatorToken.lineNumber(), designatorToken.charPosition(), new Symbol(designatorToken), new Symbol(terminal),
                 new Subtraction(designatorToken.lineNumber(), designatorToken.charPosition(), new Symbol(new Token("+", 0, 0)), 
-                    new VariableReference(designatorToken.lineNumber(), designatorToken.charPosition(), new Symbol(designatorToken)), 
+                    varReferenceNode, 
                         new IntegerLiteral(designatorToken.lineNumber(), designatorToken.charPosition(),  new Symbol(new Token("1", 0, 0)))));
             }
             
@@ -1230,7 +1240,6 @@ public class Compiler {
             additionRightSide = relExpr();
             return new Relation(currToken.lineNumber(), currToken.charPosition(), new Symbol(currToken), additionLeftSide, additionRightSide);
         }
-        
         return additionLeftSide;
     }
 
@@ -1280,13 +1289,13 @@ public class Compiler {
             return new Modulo(currToken.lineNumber(), currToken.charPosition(), new Symbol(currToken), powLeftSide, powRightSide);
         }
         else if (have(Token.Kind.AND)) {
-            // System.out.println("here");
             currToken = expectRetrieve(Token.Kind.AND);
             powRightSide = relExpr();
             return new LogicalAnd(currToken.lineNumber(), currToken.charPosition(), new Symbol(currToken), powLeftSide, powRightSide);
         }
 
         if (currToken != null) {
+            // System.out.println("got right side");
             powRightSide = relExpr();
             return new Multiplication(currToken.lineNumber(), currToken.charPosition(), new Symbol(currToken), powLeftSide, powRightSide);
         }
@@ -1320,10 +1329,30 @@ public class Compiler {
             }
 
             if (dimensionList.size() == 0) {
-                returnNode = new VariableReference(currToken.lineNumber(), currToken.charPosition(), new Symbol(currToken));
+                VariableReference varReferenceNode = new VariableReference(currToken.lineNumber(), currToken.charPosition(), new Symbol(currToken));
+                if (miniVarialeDeclarationList.get(currToken.lexeme()) != null) {
+                    varReferenceNode.setIsBool(miniVarialeDeclarationList.get(currToken.lexeme()).contains("BOOL"));
+                    varReferenceNode.setIsFloat(miniVarialeDeclarationList.get(currToken.lexeme()).contains("FLOAT"));
+                    varReferenceNode.setIsInt(miniVarialeDeclarationList.get(currToken.lexeme()).contains("INT"));
+                }
+                else {
+                    varReferenceNode.setIsBool(false);
+                    varReferenceNode.setIsFloat(false);
+                    varReferenceNode.setIsInt(false);
+                }
+                // System.out.println("For: " + currToken.lexeme() + " we got " + miniVarialeDeclarationList.get(currToken.lexeme()));
+
+                returnNode = varReferenceNode;
             }
             else {
-                returnNode = new VariableReference(currToken.lineNumber(), currToken.charPosition(), new Symbol(currToken), dimensionList);
+                VariableReference varReferenceNode = new VariableReference(currToken.lineNumber(), currToken.charPosition(), new Symbol(currToken), dimensionList);
+                varReferenceNode.setIsBool(miniVarialeDeclarationList.get(currToken.lexeme()).contains("BOOL"));
+                varReferenceNode.setIsFloat(miniVarialeDeclarationList.get(currToken.lexeme()).contains("FLOAT"));
+                varReferenceNode.setIsInt(miniVarialeDeclarationList.get(currToken.lexeme()).contains("INT"));
+
+                // System.out.println("For: " + currToken.lexeme() + " we got " + miniVarialeDeclarationList.get(currToken.lexeme()));
+
+                returnNode = varReferenceNode;
             }
         } else if (have(Token.Kind.NOT)) {
             expect(Token.Kind.NOT);
@@ -1368,29 +1397,37 @@ public class Compiler {
 
     public String optimization(List<String> args, boolean isLoop, boolean isMax) {
         List<String> optimizationArgs = new ArrayList<>(args);
-        // if (isMax) {
-        //     System.out.println("update to max");
-        //     optimizationArgs.clear();
-        //     optimizationArgs.clear();
-        //     optimizationArgs.add("cp");
-        //     optimizationArgs.add("cf");
-        //     optimizationArgs.add("cpp");
-        //     optimizationArgs.add("cse");
-        //     optimizationArgs.add("dce");
-        //     isLoop = true;
-        // }
-        // else {
-        //     optimizationArgs = args;
-        // }
+        isMax = !isMax;
+        // isLoop = !isLoop;
+
+        if (isMax) {
+            // System.out.println("update to max");
+            optimizationArgs.clear();
+            optimizationArgs.clear();
+            optimizationArgs.add("cp");
+            optimizationArgs.add("cf");
+            optimizationArgs.add("cpp");
+            optimizationArgs.add("cse");
+            optimizationArgs.add("dce");
+            isLoop = true;
+        }
+        else {
+            optimizationArgs = args;
+        }
 
         // open file writer
         FileWriter file = null;
+        String timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new java.util.Date());
         try {
-            file = new FileWriter("optimization-outputs.txt");
+            file = new FileWriter(timeStamp + "optimization-outputs.txt");
         } catch (IOException e) {
             e.printStackTrace();
         }
 
+        orphanFunctionElimination(file);
+        resetAllBlocks();
+        uninitializedVars(file);
+        resetAllBlocks();
 
         // loop for optimization until convergence
         // if true, then loop, if not then stop after one
@@ -1404,34 +1441,35 @@ public class Compiler {
                             while (!hasConverged) {
                                 hasConverged = true;
                                 constantPropagation(file);
+                                resetAllBlocks();
                             }
                             break;
                         case "cf":
                             while (!hasConverged) {
                                 hasConverged = true;
-                                constantFolding(file);  
+                                constantFolding(file); 
+                                resetAllBlocks(); 
                             }
                             break;
                         case "cpp":
                             while (!hasConverged) {
                                 hasConverged = true;
                                 copyPropagation(file); 
+                                resetAllBlocks();
                             }
                             break;
                         case "cse":
                             while (!hasConverged) {
                                 hasConverged = true;
                                 commonSubExpressionElimination(file);
+                                resetAllBlocks();
                             }
                             break;
                         case "dce":
                             while (!hasConverged) {
                                 hasConverged = true;
-                                orphanFunctionElimination(file);
-                                resetAllBlocks();
-                                uninitializedVars(file);
-                                resetAllBlocks();
                                 deadCodeElimination(file);
+                                resetAllBlocks();
                             }
                             break;
                     }
@@ -1439,57 +1477,62 @@ public class Compiler {
                 }
             } while(overallConvergence);
         }
-        
-        for (String currOptimization : optimizationArgs) {
-            hasConverged = false;
-            switch (currOptimization) {
-                case "cp":
-                    while (!hasConverged) {
-                        hasConverged = true;
-                        constantPropagation(file);
-                    }
-                    break;
-                case "cf":
-                    while (!hasConverged) {
-                        hasConverged = true;
-                        constantFolding(file);  
-                    }
-                    break;
-                case "cpp":
-                    while (!hasConverged) {
-                        hasConverged = true;
-                        copyPropagation(file); 
-                    }
-                    break;
-                case "cse":
-                    while (!hasConverged) {
-                        hasConverged = true;
-                        commonSubExpressionElimination(file);
-                    }
-                    break;
-                case "dce":
-                    while (!hasConverged) {
-                        hasConverged = true;
-                        deadCodeElimination(file);
-                        resetAllBlocks();
-                        orphanFunctionElimination(file);
-                        resetAllBlocks();
-                        // deadBranchElimination(file);
-                        // resetAllBlocks();
-                        uninitializedVars(file);
-                        resetAllBlocks();
-                    }
-                    break;
+        else {
+            for (String currOptimization : optimizationArgs) {
+                hasConverged = false;
+                switch (currOptimization) {
+                    case "cp":
+                        while (!hasConverged) {
+                            hasConverged = true;
+                            constantPropagation(file);
+                            resetAllBlocks();
+                        }
+                        break;
+                    case "cf":
+                        while (!hasConverged) {
+                            hasConverged = true;
+                            constantFolding(file);  
+                            resetAllBlocks();
+                        }
+                        break;
+                    case "cpp":
+                        while (!hasConverged) {
+                            hasConverged = true;
+                            copyPropagation(file); 
+                            resetAllBlocks();
+                        }
+                        break;
+                    case "cse":
+                        while (!hasConverged) {
+                            hasConverged = true;
+                            commonSubExpressionElimination(file);
+                            resetAllBlocks();
+                        }
+                        break;
+                    case "dce":
+                        while (!hasConverged) {
+                            hasConverged = true;
+                            deadCodeElimination(file);
+                            resetAllBlocks();
+                        }
+                        break;
+                }
+                overallConvergence = hasConverged;
+                resetAllBlocks();
             }
-            overallConvergence = hasConverged;
-            resetAllBlocks();
+            try {
+                file.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
         try {
             file.close();
-        } catch (IOException e) {
-            e.printStackTrace();
         }
-
+        catch (IOException e) {
+            e.printStackTrace();;
+        }
+        
         return irHead.asDotGraph();
     }
 
@@ -1519,7 +1562,6 @@ public class Compiler {
         while (!blockQueue.isEmpty()) {
             BasicBlock nextBlock = blockQueue.remove();
             nextBlock.markVisited();
-            // nextBlock.setInstructionList(deadCodeAfterReturnSingleBlock(nextBlock.getInstructions(), file, liveVariables));
             nextBlock.setInstructionList(deadCodeEliminationSingleBlock(nextBlock.getInstructions(), file, liveVariables));
 
             for (BasicBlock nextSuccessor : nextBlock.getSuccessors().keySet()) {
@@ -1572,26 +1614,6 @@ public class Compiler {
         }
     }
 
-    // private void deadBranchElimination(FileWriter file) {
-    //     Queue<BasicBlock> blockQueue = new LinkedList<>();
-    //     blockQueue.add(this.irHead);
-    //     while (!blockQueue.isEmpty()) {
-    //         BasicBlock nextBlock = blockQueue.remove();
-    //         if (!nextBlock.visited()) {
-    //             nextBlock.markVisited();
-    //             if (nextBlock.getInstructions().getInstructions().get(nextBlock.getInstructions().getInstructions().size()-1) instanceof BRA) {
-    //                 System.out.println(nextBlock.removeSuccessor(((BRA) nextBlock.getInstructions().getInstructions().get(nextBlock.getInstructions().getInstructions().size()-1)).getID()));
-    //             }
-    //         }
-
-    //         for (BasicBlock nextSuccessor : nextBlock.getSuccessors().keySet()) {
-    //             // if not visited
-    //             if (!nextSuccessor.visited())
-    //                 blockQueue.add(nextSuccessor);
-    //         }
-    //     }
-    // }
-
     private void uninitializedVars(FileWriter file) {
         Set<String> initizalizedVars = new HashSet<>();
         Queue<BasicBlock> blockQueue = new LinkedList<>();
@@ -1618,7 +1640,7 @@ public class Compiler {
                                 nextBlock.getInstructions().getInstructions().add(i, new Assign(TACList.getNextTACNumber(), v, new Literal(new Symbol(new Token("0", 0, 0)))));
                                 i++;
                                 // write to file and update convergence
-                                file.write("DCE: Warning, Uninitialized variable " + v + ". Set " + v + " to 0.\n");
+                                file.write("Warning, Uninitialized variable " + v + ". Set " + v + " to 0.\n");
                                 hasConverged = false;
                                 overallConvergence = true;
                             } catch (IOException e) {
@@ -1634,17 +1656,16 @@ public class Compiler {
                 if (!nextSuccessor.visited())
                     blockQueue.add(nextSuccessor);
             }
-
-            // CFGPrinter.LegiblePrint(irHead.getInstructions());
         }  
     }
 
 
     private void constantPropagation(FileWriter file) {
+        // System.out.println("1");
         for (BasicBlock funcBlock : this.irHead.getFunctionsMap().values()) {
             funcBlock.setInstructionList(constantPropagationSingleBlock(funcBlock.getInstructions(), file));
         }
-
+        
         Queue<BasicBlock> blockQueue = new LinkedList<>();
         blockQueue.add(this.irHead);
         while (!blockQueue.isEmpty()) {
@@ -1661,8 +1682,8 @@ public class Compiler {
             }
         }
     }
-
     private void constantFolding(FileWriter file) {
+
         for (BasicBlock funcBlock : this.irHead.getFunctionsMap().values()) {
             funcBlock.setInstructionList(constantFoldingSingleBlock(funcBlock.getInstructions(), file));
         }
@@ -1684,6 +1705,7 @@ public class Compiler {
     }
 
     private void copyPropagation(FileWriter file) {
+        // System.out.println("here");
         Queue<BasicBlock> blockQueue = new LinkedList<>();
         HashMap<String, Variable> liveVariables = new HashMap<>();
 
@@ -1925,6 +1947,7 @@ public class Compiler {
     }
 
     private TACList constantFoldingSingleBlock(TACList currInstructions, FileWriter file) {
+        // System.out.println("here");
         for (int i = 0; i < currInstructions.getInstructions().size(); i++) {
             TAC instruction = currInstructions.getInstructions().get(i);
             Literal foldedConstant;
@@ -2068,37 +2091,42 @@ public class Compiler {
                 return tacList;
             }
         }
+        // System.out.println("first instruction is " + currInstructions.get(indexOfLast));
         
         Set<Variable> firstInstructionReferences = getVariableReferences(currInstructions.get(indexOfLast));
         for (Variable v : firstInstructionReferences) {
             liveVariables.add(v.getSymbol().token().lexeme());
         }
+        // System.out.println("first instruction live variables" + liveVariables);
 
         for (int i = 0; i < currInstructions.size(); i++) {
+            // System.out.println(liveVariables);
             TAC instruction = currInstructions.get(i);
-            if ((instruction instanceof Call) || instruction.getDest() == null) {
-                continue;
-            }
+            // if ((instruction instanceof Call) || instruction.getDest() == null) {
+            //     continue;
+            // }
 
-            // check if dest is part of set, if so then add left and right
-            if (liveVariables.contains(instruction.getDest().getSymbol().token().lexeme())) {
-                liveVariables.remove(instruction.getDest().getSymbol().token().lexeme());
+            // check if dest is part of set
+            if (instruction.getDest() != null) {
                 Set<Variable> instructionReferences = getVariableReferences(instruction);
                 for (Variable v : instructionReferences) {
                     liveVariables.add(v.getSymbol().token().lexeme());
                 }
-            }
-            // if dest is not part of set, remove instruction
-            else {
-                currInstructions.remove(instruction);
-                try {
-                    file.write("DCE: Removed instruction " + instruction.getID() + ", as instruction was dead.\n");
-                    hasConverged = false;
-                    overallConvergence = true;
-                } catch (IOException e) {
-                    e.printStackTrace();
+
+                if (liveVariables.contains(instruction.getDest().getSymbol().token().lexeme())) {
+                    liveVariables.remove(instruction.getDest().getSymbol().token().lexeme());
                 }
-                i--;
+                else {
+                    currInstructions.remove(instruction);
+                    try {
+                        file.write("DCE: Removed instruction " + instruction.getID() + ", as instruction was dead.\n");
+                        hasConverged = false;
+                        overallConvergence = true;
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    i--;
+                }
             }
         }
         // reverse list back to correct order
@@ -2107,12 +2135,12 @@ public class Compiler {
     }
 
     private TACList deadCodeAfterReturnSingleBlock(TACList currInstructions, FileWriter file, Set<String> liveVariables) {
-        System.out.println("Dead code after return single block");
+        // System.out.println("Dead code after return single block");
         for (int i = 0; i < currInstructions.getInstructions().size(); i++) {
-            System.out.println(currInstructions.getInstructions().get(i));
+            // System.out.println(currInstructions.getInstructions().get(i));
             // when find return, remove rest of instructions as they are unused
             if (currInstructions.getInstructions().get(i) instanceof Return) {
-                System.out.println("Found ret");
+                // System.out.println("Found ret");
                 for (int j = i+1; j < currInstructions.getInstructions().size(); j++) {
                     currInstructions.getInstructions().remove(j);
                 }
@@ -2330,7 +2358,7 @@ public class Compiler {
 
         // map from edge and adjacent list to other variables
         Map<String, Set<String>> vertices = getVertexGraph();
-        printOutVariableGraph(vertices);
+        // printOutVariableGraph(vertices);
         Stack<String> removedVertices = new Stack<String>();
         
         // while graph is not empty
@@ -2365,10 +2393,8 @@ public class Compiler {
 
                 removedVertices.add(vertexToRemove);
                 vertices.remove(vertexToRemove);
-                // TODO: mark as possible spillages
             }
         }
-        System.out.println("Done with initial removals");
 
         // retrieve the graph again, to get the edges to add
         Map<String, Set<String>> originalGraph = getVertexGraph();
@@ -2386,12 +2412,11 @@ public class Compiler {
             String poppedVertex = removedVertices.pop();
 
             // check if we can color the node
-            int registerNumber = 0;
+            int registerNumber = 1;
             while (registerNumber < numRegs) {
                 // if we find a register number that does not align with all the edges
                 boolean foundRegisterValue = true;
                 for (int i = 0; i < originalGraph.get(poppedVertex).size(); i++) {
-                    System.out.println("comparing " + registerNumber + ": " + poppedVertex + " to " + (String) originalGraph.get(poppedVertex).toArray()[i]);
                     if (variableRegisterMap.get((String) originalGraph.get(poppedVertex).toArray()[i]) == registerNumber) {
                         foundRegisterValue = false;
                     }
@@ -2399,7 +2424,6 @@ public class Compiler {
 
                 if (foundRegisterValue) {
                     variableRegisterMap.put(poppedVertex, registerNumber);
-                    System.out.println("Assigned " + poppedVertex + "->" +  registerNumber);
                     break;
                 }
                 else {
@@ -2407,12 +2431,13 @@ public class Compiler {
                 }
             }
 
-            // no allowed vertex, so must spill
+            // no allowed vertex, so mark as spilled
             if (registerNumber == numRegs) {
-                
+                variableRegisterMap.put(poppedVertex, -1);
             }
         }
-        printOutVariableRegisters(variableRegisterMap);
+        // printOutVariableRegisters(variableRegisterMap);
+        this.variableRegisterMap = variableRegisterMap;
         assignRegistersToVariables(irHead, variableRegisterMap);
     }
 
@@ -2454,7 +2479,7 @@ public class Compiler {
         if (variableRegisterMap.containsKey(lexeme)) {
             int registerNumber = variableRegisterMap.get(lexeme);
             variable.setRegisterNumber(registerNumber);
-            System.out.println("Assigned register " + registerNumber + " to variable " + lexeme);
+            // System.out.println("Assigned register " + registerNumber + " to variable " + lexeme);
         }
     }
 
@@ -2467,7 +2492,7 @@ public class Compiler {
         Set<BasicBlock> visited = new HashSet<>();
         Stack<BasicBlock> visitedStack = new Stack<>();
     
-        //Getting the blocks in order of traversal.
+        // Get blocks in reverse post-order
         while (!queue.isEmpty()) {
             BasicBlock currentBlock = queue.poll();
     
@@ -2476,69 +2501,82 @@ public class Compiler {
             }
     
             visitedStack.push(currentBlock);
-    
             for (BasicBlock successor : currentBlock.getSuccessors().keySet()) {
                 queue.add(successor);
             }
         }
     
+        // Traverse the blocks in reverse post-order
         while (!visitedStack.isEmpty()) {
             BasicBlock currentBlock = visitedStack.pop();
-            
-            Set<Variable> localLiveVariables = blockLiveVariables.getOrDefault(currentBlock, new HashSet<>());
-    
-            for (TAC instruction : currentBlock.getInstructions().getReversedInstructions()) {
-                if (localLiveVariables.contains(instruction.getDest())) {
-                    // TODO: when removing variables, still add edge from variable to other variables in the live variables
-                    if (!vertices.containsKey(instruction.getDest().getSymbol().token().lexeme())) {
-                        vertices.put(instruction.getDest().getSymbol().token().lexeme(), new HashSet<>());
-                    }
-        
-                    for (Variable otherVariable : localLiveVariables) {
-                        if (!instruction.getDest().equals(otherVariable)) {
-                            if (!vertices.get(instruction.getDest().getSymbol().token().lexeme()).contains(otherVariable.getSymbol().token().lexeme())) {
-                                vertices.get(instruction.getDest().getSymbol().token().lexeme()).add(otherVariable.getSymbol().token().lexeme());
-                            }
-                        }
+
+            // Initialize the set of live variables for this block
+            Set<Variable> localLiveVariables = new HashSet<>();
+
+            // First, add all live variables from its successors
+            for (BasicBlock successor : currentBlock.getSuccessors().keySet()) {
+                Set<Variable> succLiveVariables = blockLiveVariables.getOrDefault(successor, new HashSet<>());
+                localLiveVariables.addAll(succLiveVariables);
+            }
+
+            // Process instructions in reverse order
+            List<TAC> instructions = new ArrayList<>(currentBlock.getInstructions().getReversedInstructions());
+            for (TAC instruction : instructions) {
+                // Handling the "kill" operation: Remove destination variable from live variables
+                if (instruction.getDest() != null) {
+                    Variable destVariable = instruction.getDest();
+                    String destLexeme = destVariable.getSymbol().token().lexeme();
+
+                    // Before removing, create edges from the destination variable to all current live variables
+                    if (!vertices.containsKey(destLexeme)) {
+                        vertices.put(destLexeme, new HashSet<>());
                     }
 
-                    localLiveVariables.remove(instruction.getDest());
-                }
-                localLiveVariables.addAll(getVariableReferences(instruction));
-            }
-            currentBlock.getInstructions().getReversedInstructions();
-    
-            for (BasicBlock predecessor : currentBlock.getPredecessors()) {
-                // Check if the predecessor already has a live variables set in the map
-                Set<Variable> predecessorLiveVariables = blockLiveVariables.get(predecessor);
-                
-                // If not, create a new set and put it in the map
-                if (predecessorLiveVariables == null) {
-                    predecessorLiveVariables = new HashSet<>();
-                    blockLiveVariables.put(predecessor, predecessorLiveVariables);
-                }
-                
-                predecessorLiveVariables.addAll(localLiveVariables);
-            }
-            
-    
-            for (Variable liveVariable : localLiveVariables) {
-                if (!vertices.containsKey(liveVariable.getSymbol().token().lexeme())) {
-                    vertices.put(liveVariable.getSymbol().token().lexeme(), new HashSet<>());
-                }
-    
-                for (Variable otherVariable : localLiveVariables) {
-                    if (!liveVariable.equals(otherVariable)) {
-                        if (!vertices.get(liveVariable.getSymbol().token().lexeme()).contains(otherVariable.getSymbol().token().lexeme())) {
-                            vertices.get(liveVariable.getSymbol().token().lexeme()).add(otherVariable.getSymbol().token().lexeme());
+                    for (Variable liveVar : localLiveVariables) {
+                        if (!destVariable.equals(liveVar)) {
+                            String liveVarLexeme = liveVar.getSymbol().token().lexeme();
+                            if (!vertices.containsKey(liveVarLexeme)) {
+                                vertices.put(liveVarLexeme, new HashSet<>());
+                            }
+                            vertices.get(destLexeme).add(liveVarLexeme);
+                            vertices.get(liveVarLexeme).add(destLexeme);
                         }
                     }
+                    // Now remove the destination variable
+                    localLiveVariables.remove(destVariable);
                 }
+
+                // "Gen" operation: Add all variables referenced in the instruction
+                localLiveVariables.addAll(getVariableReferences(instruction));
+
+                // add edge from varible to all other live variables
+                Set<Variable> variablesToAdd = getVariableReferences(instruction);
+                for (Variable liveVar : variablesToAdd) {
+                    for (int i = 0; i < localLiveVariables.size(); i++) {
+                        String currentLiveVariable = ((Variable) localLiveVariables.toArray()[i]).getSymbol().token().lexeme();
+                        String liveVarLexeme = liveVar.getSymbol().token().lexeme();
+                        if (!vertices.containsKey(liveVarLexeme)) {
+                            vertices.put(liveVarLexeme, new HashSet<>());
+                        }
+                        if (!vertices.containsKey(currentLiveVariable)) {
+                            vertices.put(currentLiveVariable, new HashSet<>());
+                        }
+                        vertices.get(currentLiveVariable).add(liveVarLexeme);
+                        vertices.get(liveVarLexeme).add(currentLiveVariable);
+                    }
+                }
+
             }
+
+            // Store the current block's live variables in the map
+            blockLiveVariables.put(currentBlock, localLiveVariables);
+        }
+
+        // Optional: Print or otherwise use the vertices map
+        // printOutVariableGraph(vertices);
+        return vertices;
         }
     
-        return vertices;
-    }
 
     public void printOutVariableGraph(Map<String, Set<String>> graph) {
         System.out.println("Graph: ");
@@ -2561,10 +2599,1099 @@ public class Compiler {
     }   
 
 // Code Generation ==============================================================
+    Map<String, Integer> variableToOffset = new HashMap<>();
+    Map<String, Integer> variableRegisterMap = null;
+
+    int destSpilledRegister = 25;
+    int leftSpilledRegister = 26;
+    int rightSpilledRegister = 27;
+    int currentOffset = 0;
+
     public int[] genCode() {
-        return null;
+        // CFGPrinter.LegiblePrint(irHead);
+    
+        ArrayList<Integer> generatedCode = new ArrayList<>();
+        Queue<BasicBlock> blockQueue = new ArrayDeque<>();
+        Set<BasicBlock> visitedBlocks = new HashSet<>();
+        Map<Integer, TAC> branchInstructionPositions = new HashMap<>();
+    
+        // Initialize with the entry block
+        blockQueue.add(irHead);
+    
+        // Process each block in the CFG
+        while (!blockQueue.isEmpty()) {
+            BasicBlock currentBlock = blockQueue.poll();
+            // CFGPrinter.LegiblePrint(currentBlock);
+    
+            // Skip blocks that have been processed to avoid loops
+            if (!visitedBlocks.add(currentBlock)) {
+                continue;
+            }
+            
+            currentBlock.setMachineInstructionsStartingPosition(generatedCode.size());
+    
+            // Generate machine code for each instruction in the current block
+            for (TAC instruction : currentBlock.getInstructions()) {
+                // track all branch instructions and dont add yet
+                if (instruction instanceof BRA || instruction instanceof BLT || instruction instanceof BNE || instruction instanceof BEQ || instruction instanceof BGE || instruction instanceof BGT) {
+                    branchInstructionPositions.put(generatedCode.size(), instruction);
+                    continue;
+                }
+                if (instruction instanceof Call) {
+                    Call instructionCall = (Call) instruction;
+                    if (!instructionCall.isPredefined()) {
+                        branchInstructionPositions.put(generatedCode.size(), instruction);
+                        continue;
+                    }
+                }
+
+                // System.out.println("for instruction: " + instruction.getID());
+                ArrayList<Integer> instructionMachineCode = instructionToMachineCode(instruction, generatedCode.size(), 0);
+
+                // for (int i = 0; i < instructionMachineCode.size(); i++) {
+                //     System.out.print(i + ":\t" + DLX.instrString(instructionMachineCode.get(i))); // \newline included in DLX.instrString()
+                // }
+
+
+                for (Integer code : instructionMachineCode) {
+                    currentBlock.addMachineInstruction(code); // Add to BasicBlock's machineInstructions
+                    generatedCode.add(code);
+                }
+            }
+            
+            // Enqueue successors to be processed
+            currentBlock.getSuccessors().keySet().forEach(blockQueue::add);
+        }
+
+        // traverse through branch instructions now that blocks have a starting position
+        int count = 0;
+        // for (Integer currPosition : branchInstructionPositions.keySet()) {
+        //     ArrayList<Integer> currentBranchedCode = instructionToMachineCode(branchInstructionPositions.get(currPosition), currPosition, count);
+        //     for (Integer currCode : currentBranchedCode) {
+        //         // System.out.println("adding " + DLX.instrString(currCode));
+        //         generatedCode.add(currPosition.intValue() + count, currCode);
+        //         count++;
+        //     }
+        // }
+
+        // Add RET 0 instruction to signify end of program
+        int ret0 = DLX.assemble(55, 0);
+        generatedCode.add(ret0);
+    
+        // Convert ArrayList to array and return
+        int[] generatedCodeArray = new int[generatedCode.size()];
+        for (int i = 0; i < generatedCode.size(); i++) {
+            generatedCodeArray[i] = generatedCode.get(i);
+        }
+    
+        return generatedCodeArray;
+    }
+    
+    public ArrayList<Integer> instructionToMachineCode(TAC instruction, int instructionPosition, int offset) {
+        ArrayList<Integer> toReturn = new ArrayList<>();
+        if (instruction instanceof Add) {
+            // System.out.println("Add");
+            ArrayList<Integer> returnList = instructionToMachineCode((Add) (instruction));
+            return returnList;
+        }
+        if (instruction instanceof Sub) {
+            // System.out.println("Sub");
+            ArrayList<Integer> returnList = instructionToMachineCode((Sub) (instruction));
+            return returnList;
+        }
+        if (instruction instanceof Mul) {
+            // System.out.println("Mul");
+            ArrayList<Integer> returnlist = instructionToMachineCode((Mul) (instruction));
+            return returnlist;
+        }
+        if (instruction instanceof Div) {
+            // System.out.println("Div");
+            ArrayList<Integer> returnList = instructionToMachineCode((Div) (instruction));
+            return returnList;
+        }
+        if (instruction instanceof Mod) {
+            // System.out.println("Mod");
+            ArrayList<Integer> returnList = instructionToMachineCode((Mod) (instruction));
+            return returnList;
+        }
+        if (instruction instanceof Pow) {
+            // System.out.println("Pow");
+            ArrayList<Integer> returnList = instructionToMachineCode((Pow) (instruction));
+            return returnList;
+        }
+        if (instruction instanceof And) {
+            ArrayList<Integer> returnList = instructionToMachineCode((And) (instruction));
+            return returnList;
+        }
+        if (instruction instanceof Or) {
+            ArrayList<Integer> returnList = instructionToMachineCode((Or) (instruction));
+            return returnList;        }
+        if (instruction instanceof BEQ) {
+            ArrayList<Integer> retArrayList = instructionToMachineCode((BEQ) (instruction), instructionPosition, offset);
+            return retArrayList;
+        }
+        if (instruction instanceof BNE) {
+            ArrayList<Integer> retArrayList = instructionToMachineCode((BNE) (instruction), instructionPosition, offset);
+            return retArrayList;
+        }
+        if (instruction instanceof BLT) {
+            ArrayList<Integer> retArrayList = instructionToMachineCode((BLT) (instruction), instructionPosition, offset);
+            return retArrayList;
+        }
+        if (instruction instanceof BGE) {
+            ArrayList<Integer> retArrayList = instructionToMachineCode((BGE) (instruction), instructionPosition, offset);
+            return retArrayList;
+        }
+        if (instruction instanceof BLE) {
+            ArrayList<Integer> retArrayList = instructionToMachineCode((BLE) (instruction), instructionPosition, offset);
+            return retArrayList;
+        }
+        if (instruction instanceof BGT) {
+            ArrayList<Integer> retArrayList = instructionToMachineCode((BGT) (instruction), instructionPosition, offset);
+            return retArrayList;
+        }
+        if (instruction instanceof BRA) {
+            ArrayList<Integer> retArrayList = instructionToMachineCode((BRA) (instruction), instructionPosition, offset);
+            return retArrayList;
+        }
+        if (instruction instanceof Comparison) {
+            ArrayList<Integer> retArrayList = instructionToMachineCode((Comparison) (instruction));
+            return retArrayList;
+        }
+        if (instruction instanceof Assign) {
+            ArrayList<Integer> retArrayList = instructionToMachineCode((Assign) (instruction));
+            return retArrayList;
+        }
+        if (instruction instanceof Call) {
+            ArrayList<Integer> retArrayList = instructionToMachineCode((Call) (instruction), instructionPosition);
+            return retArrayList;
+        }
+        if (instruction instanceof Return) {
+            ArrayList<Integer> retArraylist = instructionToMachineCode((Return) (instruction));
+            return retArraylist;
+        }
+
+        return toReturn;
     }
 
+    public ArrayList<Integer> instructionToMachineCode(Add instruction) {
+        ArrayList<Integer> retArrayList = new ArrayList<>();
+        int opCode = 0;
+
+        int destRegisterToSet = instruction.getDest().getMachineCodeRepresentation();
+        int leftRegisterToSet = instruction.getLeft().getMachineCodeRepresentation();
+        int rightRegisterToSet = instruction.getRight().getMachineCodeRepresentation();
+        boolean destSpilled = false;
+
+
+        // assuming left is always a variable, check for spilling
+        Variable leftVariable = (Variable) instruction.getLeft();
+        if (leftVariable.getRegisterNumber() == -1) {
+            if (variableToOffset.containsKey(leftVariable.getSymbol().token().lexeme())) {
+                retArrayList.add(DLX.assemble(40, leftSpilledRegister, 30, variableToOffset.get(leftVariable.getSymbol().token().lexeme())));
+            } else {
+                variableToOffset.put(leftVariable.getSymbol().token().lexeme(), currentOffset);
+                currentOffset -= 4;  // Decrement the current offset to create a new space in memory
+            }
+            leftRegisterToSet = leftSpilledRegister;
+        }
+
+        // Handle spilling for the right operand
+        if (instruction.getRight() instanceof Variable) {
+            Variable rightVariable = (Variable) instruction.getRight();
+            if (rightVariable.getRegisterNumber() == -1) {
+                if (variableToOffset.containsKey(rightVariable.getSymbol().token().lexeme())) {
+                    retArrayList.add(DLX.assemble(40, rightSpilledRegister, 30, variableToOffset.get(rightVariable.getSymbol().token().lexeme())));
+                } else {
+                    variableToOffset.put(rightVariable.getSymbol().token().lexeme(), currentOffset);
+                    currentOffset -= 4;  // Decrement the current offset to create a new space in memory
+                }
+                rightRegisterToSet = rightSpilledRegister;
+            }
+        }
+
+        // if dest is spilled
+        if (instruction.getDest().getRegisterNumber() == -1) {
+            if (variableToOffset.containsKey(instruction.getDest().getSymbol().token().lexeme())) {
+                retArrayList.add(DLX.assemble(40, destSpilledRegister, 30, variableToOffset.get(instruction.getDest().getSymbol().token().lexeme())));
+            }
+            else {
+                // might be the first value
+                variableToOffset.put(instruction.getDest().getSymbol().token().lexeme(), currentOffset);
+                currentOffset -= 4;
+            }
+            destSpilled = true;
+            destRegisterToSet = destSpilledRegister;
+        }
+    
+        if (instruction.getRight().isFloat() && instruction.getRight() instanceof Literal) {
+            // fADDI
+            opCode = 27;
+            float d = instruction.getRight().getMachineCodeFloatRepresentation();
+            retArrayList.add(DLX.assemble(opCode, destRegisterToSet, leftRegisterToSet, d));
+        } else if (instruction.getRight().isFloat()) {
+            // fADD
+            opCode = 7;
+        } else if (instruction.getRight() instanceof Literal) {
+            // ADDI
+            opCode = 20;
+        }
+    
+        retArrayList.add(DLX.assemble(opCode, destRegisterToSet, leftRegisterToSet, rightRegisterToSet));
+        
+        if (destSpilled) {
+            retArrayList.add(DLX.assemble(43, destRegisterToSet, 30, variableToOffset.get(instruction.getDest().getSymbol().token().lexeme())));
+        }
+
+        return retArrayList;
+    }
+    
+
+    public ArrayList<Integer> instructionToMachineCode(Sub instruction) {
+        ArrayList<Integer> retArrayList = new ArrayList<>();
+        int opCode = 1;
+
+        int destRegisterToSet = instruction.getDest().getMachineCodeRepresentation();
+        int leftRegisterToSet = instruction.getLeft().getMachineCodeRepresentation();
+        int rightRegisterToSet = instruction.getRight().getMachineCodeRepresentation();
+        boolean destSpilled = false;
+
+        Variable leftVariable = (Variable) instruction.getLeft();
+        if (leftVariable.getRegisterNumber() == -1) {
+            if (variableToOffset.containsKey(leftVariable.getSymbol().token().lexeme())) {
+                retArrayList.add(DLX.assemble(40, leftSpilledRegister, 30, variableToOffset.get(leftVariable.getSymbol().token().lexeme())));
+            } else {
+                variableToOffset.put(leftVariable.getSymbol().token().lexeme(), currentOffset);
+                currentOffset -= 4;  // Decrement the current offset to create a new space in memory
+            }
+            leftRegisterToSet = leftSpilledRegister;
+        }
+
+        // Handle spilling for the right operand
+        if (instruction.getRight() instanceof Variable) {
+            Variable rightVariable = (Variable) instruction.getRight();
+            if (rightVariable.getRegisterNumber() == -1) {
+                if (variableToOffset.containsKey(rightVariable.getSymbol().token().lexeme())) {
+                    retArrayList.add(DLX.assemble(40, rightSpilledRegister, 30, variableToOffset.get(rightVariable.getSymbol().token().lexeme())));
+                } else {
+                    variableToOffset.put(rightVariable.getSymbol().token().lexeme(), currentOffset);
+                    currentOffset -= 4;  // Decrement the current offset to create a new space in memory
+                }
+                rightRegisterToSet = rightSpilledRegister;
+            }
+        }
+
+        Variable destVariable = instruction.getDest();
+        if (destVariable.getRegisterNumber() == -1) {
+            if (variableToOffset.containsKey(destVariable.getSymbol().token().lexeme())) {
+                retArrayList.add(DLX.assemble(40, destSpilledRegister, 30, variableToOffset.get(destVariable.getSymbol().token().lexeme())));
+            }
+            else {
+                variableToOffset.put(destVariable.getSymbol().token().lexeme(), currentOffset);
+                currentOffset -= 4;
+            }
+            destSpilled = true;
+            destRegisterToSet = destSpilledRegister;
+        }
+    
+        if (instruction.getRight().isFloat() && instruction.getRight() instanceof Literal) {
+            opCode = 28; 
+            float d = instruction.getRight().getMachineCodeFloatRepresentation();
+            retArrayList.add(DLX.assemble(opCode, destRegisterToSet, leftRegisterToSet, d));
+        }
+        else if (instruction.getRight().isFloat()) {
+            opCode = 8; 
+        }
+        else if (instruction.getRight() instanceof Literal) {
+            opCode = 21;
+        }
+    
+        retArrayList.add(DLX.assemble(opCode, destRegisterToSet, leftRegisterToSet, rightRegisterToSet));
+
+        if (destSpilled) {
+            retArrayList.add(DLX.assemble(43, destRegisterToSet, 30, variableToOffset.get(instruction.getDest().getSymbol().token().lexeme())));
+        }
+
+        return retArrayList;
+    }
+    
+
+    public ArrayList<Integer> instructionToMachineCode(Mul instruction) {
+        ArrayList<Integer> retArrayList = new ArrayList<>();
+        int opCode = 2;
+
+        int destRegisterToSet = instruction.getDest().getMachineCodeRepresentation();
+        int leftRegisterToSet = instruction.getLeft().getMachineCodeRepresentation();
+        int rightRegisterToSet = instruction.getRight().getMachineCodeRepresentation();
+        boolean destSpilled = false;
+
+        Variable leftVariable = (Variable) instruction.getLeft();
+        if (leftVariable.getRegisterNumber() == -1) {
+            if (variableToOffset.containsKey(leftVariable.getSymbol().token().lexeme())) {
+                retArrayList.add(DLX.assemble(40, leftSpilledRegister, 30, variableToOffset.get(leftVariable.getSymbol().token().lexeme())));
+            } else {
+                variableToOffset.put(leftVariable.getSymbol().token().lexeme(), currentOffset);
+                currentOffset -= 4;  // Decrement the current offset to create a new space in memory
+            }
+            leftRegisterToSet = leftSpilledRegister;
+        }
+
+        // Handle spilling for the right operand
+        if (instruction.getRight() instanceof Variable) {
+            Variable rightVariable = (Variable) instruction.getRight();
+            if (rightVariable.getRegisterNumber() == -1) {
+                if (variableToOffset.containsKey(rightVariable.getSymbol().token().lexeme())) {
+                    retArrayList.add(DLX.assemble(40, rightSpilledRegister, 30, variableToOffset.get(rightVariable.getSymbol().token().lexeme())));
+                } else {
+                    variableToOffset.put(rightVariable.getSymbol().token().lexeme(), currentOffset);
+                    currentOffset -= 4;  // Decrement the current offset to create a new space in memory
+                }
+                rightRegisterToSet = rightSpilledRegister;
+            }
+        }
+
+        Variable destVariable = instruction.getDest();
+        if (destVariable.getRegisterNumber() == -1) {
+            if (variableToOffset.containsKey(destVariable.getSymbol().token().lexeme())) {
+                retArrayList.add(DLX.assemble(40, destSpilledRegister, 30, variableToOffset.get(destVariable.getSymbol().token().lexeme())));
+            }
+            else {
+                variableToOffset.put(destVariable.getSymbol().token().lexeme(), currentOffset);
+                currentOffset -= 4;
+            }
+            destSpilled = true;
+            destRegisterToSet = destSpilledRegister;
+        }
+    
+        if (instruction.getRight().isFloat() && instruction.getRight() instanceof Literal) {
+            opCode = 29;
+            float d = instruction.getRight().getMachineCodeFloatRepresentation();
+            retArrayList.add(DLX.assemble(opCode, destRegisterToSet, leftRegisterToSet, d));
+        }
+        else if (instruction.getRight().isFloat()) {
+            opCode = 9;
+        }
+        else if (instruction.getRight() instanceof Literal) {
+            opCode = 22;
+        }
+
+        retArrayList.add(DLX.assemble(opCode, destRegisterToSet, leftRegisterToSet, rightRegisterToSet));
+        
+        if (destSpilled) {
+            retArrayList.add(DLX.assemble(43, destRegisterToSet, 30, variableToOffset.get(instruction.getDest().getSymbol().token().lexeme())));
+        }
+
+        return retArrayList;
+    }
+    
+
+    public ArrayList<Integer> instructionToMachineCode(Div instruction) {
+        ArrayList<Integer> retArrayList = new ArrayList<>();
+        int opCode = 3; 
+
+        int destRegisterToSet = instruction.getDest().getMachineCodeRepresentation();
+        int leftRegisterToSet = instruction.getLeft().getMachineCodeRepresentation();
+        int rightRegisterToSet = instruction.getRight().getMachineCodeRepresentation();
+        boolean destSpilled = false;
+
+        // System.out.println("Attempting to div " + instruction.getDest() + ":" + destRegisterToSet + " = " + instruction.getLeft() + ":" + leftRegisterToSet + "+" + instruction.getRight() + ":" + rightRegisterToSet);
+
+        Variable leftVariable = (Variable) instruction.getLeft();
+        if (leftVariable.getRegisterNumber() == -1) {
+            if (variableToOffset.containsKey(leftVariable.getSymbol().token().lexeme())) {
+                retArrayList.add(DLX.assemble(40, leftSpilledRegister, 30, variableToOffset.get(leftVariable.getSymbol().token().lexeme())));
+            } else {
+                variableToOffset.put(leftVariable.getSymbol().token().lexeme(), currentOffset);
+                currentOffset -= 4;  // Decrement the current offset to create a new space in memory
+            }
+            leftRegisterToSet = leftSpilledRegister;
+        }
+
+        // Handle spilling for the right operand
+        if (instruction.getRight() instanceof Variable) {
+            Variable rightVariable = (Variable) instruction.getRight();
+            if (rightVariable.getRegisterNumber() == -1) {
+                if (variableToOffset.containsKey(rightVariable.getSymbol().token().lexeme())) {
+                    retArrayList.add(DLX.assemble(40, rightSpilledRegister, 30, variableToOffset.get(rightVariable.getSymbol().token().lexeme())));
+                } else {
+                    variableToOffset.put(rightVariable.getSymbol().token().lexeme(), currentOffset);
+                    currentOffset -= 4;  // Decrement the current offset to create a new space in memory
+                }
+                rightRegisterToSet = rightSpilledRegister;
+            }
+        }
+
+        Variable destVariable = instruction.getDest();
+        if (destVariable.getRegisterNumber() == -1) {
+            if (variableToOffset.containsKey(destVariable.getSymbol().token().lexeme())) {
+                retArrayList.add(DLX.assemble(40, destSpilledRegister, 30, variableToOffset.get(destVariable.getSymbol().token().lexeme())));
+            }
+            else {
+                variableToOffset.put(destVariable.getSymbol().token().lexeme(), currentOffset);
+                currentOffset -= 4;
+            }
+            destSpilled = true;
+            destRegisterToSet = destSpilledRegister;
+        }
+
+        if (instruction.getRight().isFloat() && instruction.getRight() instanceof Literal) {
+            opCode = 30;
+            float d = instruction.getRight().getMachineCodeFloatRepresentation();
+            retArrayList.add(DLX.assemble(opCode, destRegisterToSet, leftRegisterToSet, d));
+        }
+        else if (instruction.getRight().isFloat()) {
+            opCode = 10;
+        }
+        else if (instruction.getRight() instanceof Literal) {
+            opCode = 23;
+        }
+    
+        retArrayList.add(DLX.assemble(opCode, destRegisterToSet, leftRegisterToSet, rightRegisterToSet));
+
+        if (destSpilled) {
+            retArrayList.add(DLX.assemble(43, destRegisterToSet, 30, variableToOffset.get(instruction.getDest().getSymbol().token().lexeme())));
+        }
+
+        return retArrayList;
+    }
+    
+
+    public ArrayList<Integer> instructionToMachineCode(Mod instruction) {
+        ArrayList<Integer> retArrayList = new ArrayList<>();
+        int opCode = 4;
+
+        int destRegisterToSet = instruction.getDest().getMachineCodeRepresentation();
+        int leftRegisterToSet = instruction.getLeft().getMachineCodeRepresentation();
+        int rightRegisterToSet = instruction.getRight().getMachineCodeRepresentation();
+        boolean destSpilled = false;
+
+        // Handle spilling for the left operand
+        Variable leftVariable = (Variable) instruction.getLeft();
+        if (leftVariable.getRegisterNumber() == -1) {
+            if (variableToOffset.containsKey(leftVariable.getSymbol().token().lexeme())) {
+                retArrayList.add(DLX.assemble(40, leftSpilledRegister, 30, variableToOffset.get(leftVariable.getSymbol().token().lexeme())));
+            } else {
+                variableToOffset.put(leftVariable.getSymbol().token().lexeme(), currentOffset);
+                currentOffset -= 4;  // Decrement the current offset to create a new space in memory
+            }
+            leftRegisterToSet = leftSpilledRegister;
+        }
+
+        // Handle spilling for the right operand
+        if (instruction.getRight() instanceof Variable) {
+            Variable rightVariable = (Variable) instruction.getRight();
+            if (rightVariable.getRegisterNumber() == -1) {
+                if (variableToOffset.containsKey(rightVariable.getSymbol().token().lexeme())) {
+                    retArrayList.add(DLX.assemble(40, rightSpilledRegister, 30, variableToOffset.get(rightVariable.getSymbol().token().lexeme())));
+                } else {
+                    variableToOffset.put(rightVariable.getSymbol().token().lexeme(), currentOffset);
+                    currentOffset -= 4;  // Decrement the current offset to create a new space in memory
+                }
+                rightRegisterToSet = rightSpilledRegister;
+            }
+        }
+
+
+        Variable destVariable = instruction.getDest();
+        if (destVariable.getRegisterNumber() == -1) {
+            if (variableToOffset.containsKey(destVariable.getSymbol().token().lexeme())) {
+                retArrayList.add(DLX.assemble(40, destSpilledRegister, 30, variableToOffset.get(destVariable.getSymbol().token().lexeme())));
+            }
+            else {
+                variableToOffset.put(destVariable.getSymbol().token().lexeme(), currentOffset);
+                currentOffset -= 4;
+            }
+            destSpilled = true;
+            destRegisterToSet = destSpilledRegister;
+        }
+    
+        if (instruction.getRight().isFloat() && instruction.getRight() instanceof Literal) {
+            opCode = 31;
+            float d = instruction.getRight().getMachineCodeFloatRepresentation();
+            retArrayList.add(DLX.assemble(opCode, destRegisterToSet, leftRegisterToSet, d));
+        }
+        else if (instruction.getRight().isFloat()) {
+            opCode = 11; 
+        }
+        else if (instruction.getRight() instanceof Literal) {
+            opCode = 24;
+        }
+    
+        retArrayList.add(DLX.assemble(opCode, destRegisterToSet, leftRegisterToSet, rightRegisterToSet));
+        
+        if (destSpilled) {
+            retArrayList.add(DLX.assemble(43, destRegisterToSet, 30, variableToOffset.get(instruction.getDest().getSymbol().token().lexeme())));
+        }
+        
+        return retArrayList;
+    }
+    
+
+    public ArrayList<Integer> instructionToMachineCode(Pow instruction) {
+        ArrayList<Integer> retArrayList = new ArrayList<>();
+        int opCode = 5;
+
+        int destRegisterToSet = instruction.getDest().getMachineCodeRepresentation();
+        int leftRegisterToSet = instruction.getLeft().getMachineCodeRepresentation();
+        int rightRegisterToSet = instruction.getRight().getMachineCodeRepresentation();
+        boolean destSpilled = false;
+
+        // Handle spilling for the left operand
+        Variable leftVariable = (Variable) instruction.getLeft();
+        if (leftVariable.getRegisterNumber() == -1) {
+            if (variableToOffset.containsKey(leftVariable.getSymbol().token().lexeme())) {
+                retArrayList.add(DLX.assemble(40, leftSpilledRegister, 30, variableToOffset.get(leftVariable.getSymbol().token().lexeme())));
+            } else {
+                variableToOffset.put(leftVariable.getSymbol().token().lexeme(), currentOffset);
+                currentOffset -= 4;  // Decrement the current offset to create a new space in memory
+            }
+            leftRegisterToSet = leftSpilledRegister;
+        }
+
+        // Handle spilling for the right operand
+        Variable rightVariable = (Variable) instruction.getRight();
+        if (rightVariable.getRegisterNumber() == -1) {
+            if (variableToOffset.containsKey(rightVariable.getSymbol().token().lexeme())) {
+                retArrayList.add(DLX.assemble(40, rightSpilledRegister, 30, variableToOffset.get(rightVariable.getSymbol().token().lexeme())));
+            } else {
+                variableToOffset.put(rightVariable.getSymbol().token().lexeme(), currentOffset);
+                currentOffset -= 4;  // Decrement the current offset to create a new space in memory
+            }
+            rightRegisterToSet = rightSpilledRegister;
+        }
+
+
+        Variable destVariable = instruction.getDest();
+        if (destVariable.getRegisterNumber() == -1) {
+            if (variableToOffset.containsKey(destVariable.getSymbol().token().lexeme())) {
+                retArrayList.add(DLX.assemble(40, destSpilledRegister, 30, variableToOffset.get(destVariable.getSymbol().token().lexeme())));
+            }
+            else {
+                variableToOffset.put(destVariable.getSymbol().token().lexeme(), currentOffset);
+                currentOffset -= 4;
+            }
+            destSpilled = true;
+            destRegisterToSet = destSpilledRegister;
+        }
+
+        // System.out.println("powering: " + destRegisterToSet + ", " + leftRegisterToSet + ", " + rightRegisterToSet);
+        if (instruction.getRight() instanceof Literal) {
+            opCode = 25;
+        }
+    
+        retArrayList.add(DLX.assemble(opCode, destRegisterToSet, leftRegisterToSet, rightRegisterToSet));
+
+        if (destSpilled) {
+            retArrayList.add(DLX.assemble(43, destRegisterToSet, 30, variableToOffset.get(instruction.getDest().getSymbol().token().lexeme())));
+        }
+
+        return retArrayList;
+    }
+    
+
+    public ArrayList<Integer> instructionToMachineCode(And instruction) {
+        ArrayList<Integer> retArrayList = new ArrayList<>();
+        int opCode = 14; // Default opcode for AND a, b, c
+        int a = instruction.getDest().getMachineCodeRepresentation();
+        int b = instruction.getLeft().getMachineCodeRepresentation();
+        int c = instruction.getRight().getMachineCodeRepresentation();
+        boolean destSpilled = false;
+
+        // Handle spilling for the left operand
+        if (instruction.getLeft() instanceof Variable) {
+            Variable leftVariable = (Variable) instruction.getLeft();
+            if (leftVariable.getRegisterNumber() == -1) {
+                retArrayList.add(DLX.assemble(40, leftSpilledRegister, 30, variableToOffset.get(leftVariable.getSymbol().token().lexeme())));
+                b = leftSpilledRegister;
+            }
+        }
+
+        // Handle spilling for the right operand
+        if (instruction.getRight() instanceof Variable) {
+            Variable rightVariable = (Variable) instruction.getRight();
+            if (rightVariable.getRegisterNumber() == -1) {
+                if (variableToOffset.containsKey(rightVariable.getSymbol().token().lexeme())) {
+                    retArrayList.add(DLX.assemble(40, rightSpilledRegister, 30, variableToOffset.get(rightVariable.getSymbol().token().lexeme())));
+                } else {
+                    variableToOffset.put(rightVariable.getSymbol().token().lexeme(), currentOffset);
+                    currentOffset -= 4;  // Decrement the current offset to create a new space in memory
+                }
+                c = rightSpilledRegister;
+            }
+        }
+
+        // Handle spilling for the destination operand
+        Variable destVariable = instruction.getDest();
+        if (destVariable.getRegisterNumber() == -1) {
+            if (variableToOffset.containsKey(destVariable.getSymbol().token().lexeme())) {
+                retArrayList.add(DLX.assemble(40, destSpilledRegister, 30, variableToOffset.get(destVariable.getSymbol().token().lexeme())));
+            } else {
+                variableToOffset.put(destVariable.getSymbol().token().lexeme(), currentOffset);
+                currentOffset -= 4;
+            }
+            destSpilled = true;
+            a = destSpilledRegister;
+        }
+
+        // Check for literal right operand to adjust opcode for immediate AND
+        if (instruction.getRight() instanceof Literal) {
+            opCode = 34; // Opcode for ANDI
+        }
+
+        retArrayList.add(DLX.assemble(opCode, a, b, c));
+
+        // If the destination was spilled, store it back to memory
+        if (destSpilled) {
+            retArrayList.add(DLX.assemble(43, a, 30, variableToOffset.get(instruction.getDest().getSymbol().token().lexeme())));
+        }
+
+        return retArrayList;
+    }
+
+    
+
+    public ArrayList<Integer> instructionToMachineCode(Or instruction) {
+        ArrayList<Integer> retArrayList = new ArrayList<>();
+        int opCode = 13; // Default opcode for OR a, b, c
+        int a = instruction.getDest().getMachineCodeRepresentation();
+        int b = instruction.getLeft().getMachineCodeRepresentation();
+        int c = instruction.getRight().getMachineCodeRepresentation();
+        boolean destSpilled = false;
+
+        System.out.println("Trying to or: " + opCode + ", " + a + ", " + b + ", c:" + instruction.getRight() + c);
+
+        // Handle spilling for the left operand
+        if (instruction.getLeft() instanceof Variable) {
+            Variable leftVariable = (Variable) instruction.getLeft();
+            if (leftVariable.getRegisterNumber() == -1) {
+                if (variableToOffset.containsKey(leftVariable.getSymbol().token().lexeme())) {
+                    retArrayList.add(DLX.assemble(40, leftSpilledRegister, 30, variableToOffset.get(leftVariable.getSymbol().token().lexeme())));
+                } else {
+                    variableToOffset.put(leftVariable.getSymbol().token().lexeme(), currentOffset);
+                    currentOffset -= 4;  // Decrement the current offset to create a new space in memory
+                }
+                b = leftSpilledRegister;
+            }
+        }
+
+
+        if (instruction.getRight() instanceof Variable) {
+            Variable rightVariable = (Variable) instruction.getRight();
+            if (rightVariable.getRegisterNumber() == -1) {
+                if (variableToOffset.containsKey(rightVariable.getSymbol().token().lexeme())) {
+                    retArrayList.add(DLX.assemble(40, rightSpilledRegister, 30, variableToOffset.get(rightVariable.getSymbol().token().lexeme())));
+                } else {
+                    variableToOffset.put(rightVariable.getSymbol().token().lexeme(), currentOffset);
+                    currentOffset -= 4;  // Decrement the current offset to create a new space in memory
+                }
+                c = rightSpilledRegister;
+            }
+        }
+
+        // Handle spilling for the destination operand
+        Variable destVariable = instruction.getDest();
+        if (destVariable.getRegisterNumber() == -1) {
+            if (variableToOffset.containsKey(destVariable.getSymbol().token().lexeme())) {
+                retArrayList.add(DLX.assemble(40, destSpilledRegister, 30, variableToOffset.get(destVariable.getSymbol().token().lexeme())));
+            } else {
+                variableToOffset.put(destVariable.getSymbol().token().lexeme(), currentOffset);
+                currentOffset -= 4;
+            }
+            destSpilled = true;
+            a = destSpilledRegister;
+        }
+
+        // Check for literal right operand to adjust opcode for immediate OR
+        if (instruction.getRight() instanceof Literal) {
+            opCode = 33; // Opcode for ORI
+        }
+        
+        System.out.println("Trying to or: " + opCode + ", " + a + ", " + b + ", c" + c);
+        retArrayList.add(DLX.assemble(opCode, a, b, c));
+
+        // If the destination was spilled, store it back to memory
+        if (destSpilled) {
+            retArrayList.add(DLX.assemble(43, a, 30, variableToOffset.get(instruction.getDest().getSymbol().token().lexeme())));
+        }
+
+        return retArrayList;
+    }
+
+    
+    public ArrayList<Integer> instructionToMachineCode (BEQ node, int instructionPosition, int offset) {
+        ArrayList<Integer> toReturn = new ArrayList<>();
+        int opCode = 47;
+        int a = node.getLeft().getMachineCodeRepresentation();
+        int c = node.getTrueBasicBlock().getMachineInstructionsStartingPosition() - instructionPosition;
+        // System.out.println("Generated BEQ jump from " + instructionPosition + "->" + node.getTrueBasicBlock().getMachineInstructionsStartingPosition());
+
+        if (node.getFalseBasicBlock() == null) {
+            int cOffset = (c < 0) ? -1 : 1;
+            toReturn.add(DLX.assemble(opCode, a, c + cOffset));
+        }
+        else {
+            int d = node.getFalseBasicBlock().getMachineInstructionsStartingPosition() - instructionPosition;
+
+            int cOffset = (c < 0) ? -2 : 2;
+            int dOffset = (c < 0) ? -2 : 2;
+            
+            toReturn.add(DLX.assemble(opCode, a, c + cOffset));
+            toReturn.add(DLX.assemble(48, 0, d + dOffset));
+        }
+
+        return toReturn;
+    }
+    
+    public ArrayList<Integer> instructionToMachineCode (BNE node, int instructionPosition, int offset) {
+        ArrayList<Integer> toReturn = new ArrayList<>();
+        int opCode = 48;
+        int a = node.getLeft().getMachineCodeRepresentation();
+        int c = node.getTrueBasicBlock().getMachineInstructionsStartingPosition() - instructionPosition;
+        // System.out.println("Generated BNE jump from " + instructionPosition + "->" + node.getTrueBasicBlock().getMachineInstructionsStartingPosition());
+
+        if (node.getFalseBasicBlock() == null) {
+            int cOffset = (c < 0) ? -1 : 1;
+            toReturn.add(DLX.assemble(opCode, a, c + cOffset));
+        }
+        else {
+            int d = node.getFalseBasicBlock().getMachineInstructionsStartingPosition() - instructionPosition;
+
+            int cOffset = (c < 0) ? -2 : 2;
+            int dOffset = (c < 0) ? -2 : 2;
+
+            toReturn.add(DLX.assemble(opCode, a, c + cOffset));
+            toReturn.add(DLX.assemble(47, 0, d + dOffset));
+        }
+
+        return toReturn;
+    }
+
+    public ArrayList<Integer> instructionToMachineCode (BLT node, int instructionPosition, int offset) {
+        ArrayList<Integer> toReturn = new ArrayList<>();
+        int opCode = 49;
+        int a = node.getLeft().getMachineCodeRepresentation();
+        int c = node.getTrueBasicBlock().getMachineInstructionsStartingPosition() - instructionPosition;
+        // System.out.println("Generated BLT jump from " + instructionPosition + "->" + node.getTrueBasicBlock().getMachineInstructionsStartingPosition());
+
+        if (node.getFalseBasicBlock() == null) {
+            int cOffset = (c < 0) ? -1 : 1;
+            toReturn.add(DLX.assemble(opCode, a, c + cOffset));
+        }
+        else {
+            int d = node.getFalseBasicBlock().getMachineInstructionsStartingPosition() - instructionPosition;
+
+            int cOffset = (c < 0) ? -2 : 2;
+            int dOffset = (d < 0) ? -2 : 2;
+
+            toReturn.add(DLX.assemble(opCode, a, c + cOffset));
+            toReturn.add(DLX.assemble(50, 0, d + dOffset));
+        }
+
+        return toReturn;
+    }
+
+    public ArrayList<Integer> instructionToMachineCode (BGE node, int instructionPosition, int offset) {
+        ArrayList<Integer> toReturn = new ArrayList<>();
+        int opCode = 50;
+        int a = node.getLeft().getMachineCodeRepresentation();
+        int c = node.getTrueBasicBlock().getMachineInstructionsStartingPosition() - instructionPosition;
+        // System.out.println("Generated BGE jump from " + instructionPosition + "->" + node.getTrueBasicBlock().getMachineInstructionsStartingPosition());
+
+        if (node.getFalseBasicBlock() == null) {
+            int cOffset = (c < 0) ? -1 : 1;
+            toReturn.add(DLX.assemble(opCode, a, c + cOffset));
+        }
+        else {
+            int d = node.getFalseBasicBlock().getMachineInstructionsStartingPosition() - instructionPosition;
+
+            int cOffset = (c < 0) ? -2 : 2;
+            int dOffset = (c < 0) ? -2 : 2;
+
+            toReturn.add(DLX.assemble(opCode, a, c + cOffset));
+            toReturn.add(DLX.assemble(49, 0, d + dOffset));
+        }
+        return toReturn;
+    }
+
+    public ArrayList<Integer> instructionToMachineCode (BLE node, int instructionPosition, int offset) {
+        ArrayList<Integer> toReturn = new ArrayList<>();
+        int opCode = 51;
+        int a = node.getLeft().getMachineCodeRepresentation();
+        int c = node.getTrueBasicBlock().getMachineInstructionsStartingPosition() - instructionPosition;
+        // System.out.println("Generated BLE jump from " + instructionPosition + "->" + node.getTrueBasicBlock().getMachineInstructionsStartingPosition());
+
+        if (node.getFalseBasicBlock() == null) {
+            int cOffset = (c < 0) ? -1 : 1;
+            toReturn.add(DLX.assemble(opCode, a, c + cOffset));
+        }
+        else {
+            int d = node.getFalseBasicBlock().getMachineInstructionsStartingPosition() - instructionPosition;
+
+            int cOffset = (c < 0) ? -2 : 2;
+            int dOffset = (c < 0) ? -2 : 2;
+
+            toReturn.add(DLX.assemble(opCode, a, c + cOffset));
+            toReturn.add(DLX.assemble(52, 0, d + dOffset));
+        }
+        
+        return toReturn;
+    }
+
+    public ArrayList<Integer> instructionToMachineCode (BGT node, int instructionPosition, int offset) {
+        ArrayList<Integer> toReturn = new ArrayList<>();
+        int opCode = 52;
+        int a = node.getLeft().getMachineCodeRepresentation();
+        int c = node.getTrueBasicBlock().getMachineInstructionsStartingPosition() - instructionPosition;
+        // System.out.println("Generated BGT jump from " + instructionPosition + "->" + node.getTrueBasicBlock().getMachineInstructionsStartingPosition());
+        // System.out.println("Generated BLE jump from " + instructionPosition + "->" + node.getFalseBasicBlock().getMachineInstructionsStartingPosition());
+
+        if (node.getFalseBasicBlock() == null) {
+            // System.out.println("A");
+            int cOffset = (c < 0) ? -1 : 1;
+            toReturn.add(DLX.assemble(opCode, a, c + cOffset));
+        }
+        else {
+            // System.out.println("B");
+            int d = node.getFalseBasicBlock().getMachineInstructionsStartingPosition() - instructionPosition;
+
+            int cOffset = (c < 0) ? -2 : 2;
+            int dOffset = (d < 0) ? -2 : 2;
+            
+            toReturn.add(DLX.assemble(opCode, a, c + cOffset));
+            toReturn.add(DLX.assemble(51, 0, d + dOffset));
+            
+            
+        }
+        return toReturn;
+    }
+
+    public ArrayList<Integer> instructionToMachineCode (BRA node, int instructionPosition, int offset) {
+        ArrayList<Integer> toReturn = new ArrayList<>();
+        int opCode = 47;
+        int a = 0; // branch if register 0 == 0, but r0 always holds the value 0
+        int c = node.getTrueBasicBlock().getMachineInstructionsStartingPosition() - instructionPosition;
+        int cOffset = (c < 0) ? -1 : 1;
+        // System.out.println("Generated BEQ jump from " + instructionPosition + "->" + node.getTrueBasicBlock().getMachineInstructionsStartingPosition());
+        toReturn.add(DLX.assemble(opCode, a, c + cOffset));
+        return toReturn;
+    }
+
+    public ArrayList<Integer> instructionToMachineCode (Comparison instruction) {
+        ArrayList<Integer> retArrayList = new ArrayList<>();
+        int opCode = 6; 
+
+        int destRegisterToSet = instruction.getDest().getMachineCodeRepresentation();
+        int leftRegisterToSet = instruction.getLeft().getMachineCodeRepresentation();
+        int rightRegisterToSet = instruction.getRight().getMachineCodeRepresentation();
+        boolean destSpilled = false;
+
+        Variable leftVariable = (Variable) instruction.getLeft();
+        if (leftVariable.getRegisterNumber() == -1) {
+            if (variableToOffset.containsKey(leftVariable.getSymbol().token().lexeme())) {
+                retArrayList.add(DLX.assemble(40, leftSpilledRegister, 30, variableToOffset.get(leftVariable.getSymbol().token().lexeme())));
+            } else {
+                variableToOffset.put(leftVariable.getSymbol().token().lexeme(), currentOffset);
+                currentOffset -= 4;  // Decrement the current offset to create a new space in memory
+            }
+            leftRegisterToSet = leftSpilledRegister;
+        }
+
+        // Handle spilling for the right operand
+        if (instruction.getRight() instanceof Variable) {
+            Variable rightVariable = (Variable) instruction.getRight();
+            if (rightVariable.getRegisterNumber() == -1) {
+                if (variableToOffset.containsKey(rightVariable.getSymbol().token().lexeme())) {
+                    retArrayList.add(DLX.assemble(40, rightSpilledRegister, 30, variableToOffset.get(rightVariable.getSymbol().token().lexeme())));
+                } else {
+                    variableToOffset.put(rightVariable.getSymbol().token().lexeme(), currentOffset);
+                    currentOffset -= 4;  // Decrement the current offset to create a new space in memory
+                }
+                rightRegisterToSet = rightSpilledRegister;
+            }
+        }
+
+        Variable destVariable = instruction.getDest();
+        if (destVariable.getRegisterNumber() == -1) {
+            if (variableToOffset.containsKey(destVariable.getSymbol().token().lexeme())) {
+                retArrayList.add(DLX.assemble(40, destSpilledRegister, 30, variableToOffset.get(destVariable.getSymbol().token().lexeme())));
+            }
+            else {
+                variableToOffset.put(destVariable.getSymbol().token().lexeme(), currentOffset);
+                currentOffset -= 4;
+            }
+            destSpilled = true;
+            destRegisterToSet = destSpilledRegister;
+        }
+    
+
+        if (instruction.getRight().isFloat() && instruction.getRight() instanceof Literal) {
+            opCode = 32;
+        }
+        else if (instruction.getRight().isFloat()) {
+            opCode = 12;
+        }
+        else if (instruction.getRight() instanceof Literal) {
+            opCode = 26;
+        }
+    
+        // System.out.println("trying to compare " + destRegisterToSet + ", " + leftRegisterToSet + ", " + rightRegisterToSet);
+        retArrayList.add(DLX.assemble(opCode, destRegisterToSet, leftRegisterToSet, rightRegisterToSet));
+
+        if (destSpilled) {
+            retArrayList.add(DLX.assemble(43, destRegisterToSet, 30, variableToOffset.get(instruction.getDest().getSymbol().token().lexeme())));
+        }
+
+        return retArrayList;
+    }
+    
+    public ArrayList<Integer> instructionToMachineCode (Assign node) {
+        ArrayList<Integer> retArrayList = new ArrayList<>();
+        int registerToSet = node.getDest().getRegisterNumber();
+        int rightRegisterToSet = node.getRight().getMachineCodeRepresentation();
+        boolean isSpilled = false;
+        boolean isRightSpilled = false;
+
+        // if register is spilled
+        if (node.getDest().getRegisterNumber() == -1) {
+            // if variable already has an offset
+            if (variableToOffset.containsKey(node.getDest().getSymbol().token().lexeme())) {
+                retArrayList.add(DLX.assemble(40, destSpilledRegister, 30, variableToOffset.get(node.getDest().getSymbol().token().lexeme())));
+            }
+            // variable does not have an offset, set one, update current offset, and then load
+            else {
+                // System.out.println("var " + node.getDest() + " has not offset");
+                variableToOffset.put(node.getDest().getSymbol().token().lexeme(), currentOffset);
+                currentOffset -= 4;
+            }
+            
+            isSpilled = true;
+            registerToSet = destSpilledRegister;
+        }
+
+        if (node.getRight() instanceof Variable) {
+            Variable rightVariable = (Variable) node.getRight();
+            if (rightVariable.getRegisterNumber() == -1) {
+                retArrayList.add(DLX.assemble(40, rightSpilledRegister, 30, variableToOffset.get(rightVariable.getSymbol().token().lexeme())));
+                isRightSpilled = true;
+                rightRegisterToSet = rightSpilledRegister;
+            }
+        }
+
+        // System.out.println("Attempting to assign " + node.getDest() + ":" + registerToSet + " = " + node.getRight() + ":" + rightRegisterToSet);
+
+        if (node.getRight() instanceof Literal) {
+            if ((node.getRight()).isBool()) {
+                // if a boolean, add an or with the value 0 and the 
+                retArrayList.add(DLX.assemble(33, registerToSet, 0, rightRegisterToSet));
+            }
+            else if ((node.getRight()).isFloat()) {
+                // float add with the value 0
+                retArrayList.add(DLX.assemble(27, registerToSet, 0, node.getRight().getMachineCodeFloatRepresentation()));
+            }
+            else if ((node.getRight()).isInt()) {
+                // int add with the value 0
+                retArrayList.add(DLX.assemble(20, registerToSet, 0, rightRegisterToSet));
+            }   
+        }
+        else {
+            if ((node.getRight()).isBool()) {
+                // if a boolean, add an or with the value 0 and the 
+                retArrayList.add(DLX.assemble(13, registerToSet, 0, rightRegisterToSet));
+            }
+            else if ((node.getRight()).isFloat()) {
+                // float add with the value 0
+                retArrayList.add(DLX.assemble(7, registerToSet, 0, rightRegisterToSet));
+            }
+            else if ((node.getRight()).isInt()) {
+                // int add with the value 0
+                retArrayList.add(DLX.assemble(0, registerToSet, 0, rightRegisterToSet));
+            }  
+        }
+
+        // if spilled, then add assignment to move value back to memory location
+        if (isSpilled) {
+            retArrayList.add(DLX.assemble(43, registerToSet, 30, variableToOffset.get(node.getDest().getSymbol().token().lexeme())));
+        }
+
+        return retArrayList;
+    }
+
+    public ArrayList<Integer> instructionToMachineCode (Call node, int instructionPosition) {
+        ArrayList<Integer> toReturn = new ArrayList<>();
+        int opCode;
+
+        if (node.isPredefined()) {
+            switch (node.getFunctionName().token().lexeme()) {
+                case "readInt":
+                    opCode = 56;
+                    toReturn.add(DLX.assemble(opCode, node.getDest().getMachineCodeRepresentation()));
+                    return toReturn;
+                case "readFloat":
+                    opCode = 57;
+                    toReturn.add(DLX.assemble(opCode, node.getDest().getMachineCodeRepresentation()));
+                    return toReturn;
+                case "readBool":
+                    opCode = 58;
+                    toReturn.add(DLX.assemble(opCode, node.getDest().getMachineCodeRepresentation()));
+                    return toReturn;
+                case "printInt":
+                    opCode = 59;
+                    String registerString = ((VariableReference) node.getArgs().getExpressionParameters().get(0)).getIdent().token().lexeme();
+                    int registerToSet = variableRegisterMap.get(registerString);
+
+                    if (registerToSet == -1) {
+                        toReturn.add(DLX.assemble(40, rightSpilledRegister, 30, variableToOffset.get(registerString)));
+                        registerToSet = rightSpilledRegister;
+                    }
+
+                    toReturn.add(DLX.assemble(opCode, registerToSet));
+                    return toReturn;
+                case "printFloat":
+                    opCode = 60;
+                    toReturn.add(DLX.assemble(opCode, variableRegisterMap.get(((VariableReference) node.getArgs().getExpressionParameters().get(0)).getIdent().token().lexeme())));
+                    return toReturn;
+                case "printBool":
+                    opCode = 61;
+                    String registerStringBoolean = ((VariableReference) node.getArgs().getExpressionParameters().get(0)).getIdent().token().lexeme();
+                    int registerToSetBoolean = variableRegisterMap.get(registerStringBoolean);
+
+                    if (registerToSetBoolean == -1) {
+                        toReturn.add(DLX.assemble(40, rightSpilledRegister, 30, variableToOffset.get(registerStringBoolean)));
+                        registerToSet = rightSpilledRegister;
+                    }
+
+                    toReturn.add(DLX.assemble(opCode, registerToSetBoolean));
+                    return toReturn;
+                case "println":
+                    opCode = 62;
+                    toReturn.add(DLX.assemble(opCode));
+                    return toReturn;
+            }
+        }
+
+        // opCode = 53;
+        // toReturn.add(DLX.assemble(opCode, node.getDestinationBlock().getMachineInstructionsStartingPosition()));
+        // toReturn.add(DLX.assemble(47, 0, node.getDestinationBlock().getMachineInstructionsLength()+2));
+        return toReturn;
+    }
+
+    public ArrayList<Integer> instructionToMachineCode (Return node) {
+        ArrayList<Integer> toReturn = new ArrayList<>();
+        if (node.hasReturnValue()) {
+            if (node.getReturnValue().isInt()) {
+                toReturn.add(DLX.assemble(20, 31, 0, node.getReturnValue().getMachineCodeRepresentation()));
+            }
+            if (node.getReturnValue().isFloat()) {
+                toReturn.add(DLX.assemble(27, 31, 0, node.getReturnValue().getMachineCodeRepresentation()));
+            }
+            if (node.getReturnValue().isBool()) {
+                toReturn.add(DLX.assemble(33, 31, 0, node.getReturnValue().getMachineCodeRepresentation()));
+            }
+        }
+        
+        // toReturn.add(DLX.assemble(55, 31));
+        return toReturn;
+    }
 }
 
 

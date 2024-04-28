@@ -820,6 +820,7 @@ public class DLX {
     }
 
     private static int F2 (int op, int a, int b, int c) {
+        // System.out.println("op: " + op + ", a: " + a + ", b" + b + ", c" + c); 
         if ((a & ~0x1F | b & ~0x1F | c & ~0x1F) != 0) {
             System.err.println("Illegal Operand(s) for F2 format: " + mnemo[op]);
             bug(1);

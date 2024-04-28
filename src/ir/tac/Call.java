@@ -9,7 +9,7 @@ import ir.cfg.TACVisitor;
 
 public class Call extends TAC {
     private int id;
-    private BasicBlock dest;
+    private BasicBlock destinationBlock;
     private boolean isPredefined;
     private Symbol functionName;
     private ArgumentList args;
@@ -19,7 +19,7 @@ public class Call extends TAC {
     public Call(int id, BasicBlock dest, Symbol functionName) {
         super(id);
         this.id = id;
-        this.dest = dest;
+        this.destinationBlock = dest;
         this.functionName = functionName;
         this.isPredefined = false;
         this.hasArgs = false;
@@ -28,7 +28,7 @@ public class Call extends TAC {
     public Call(int id, BasicBlock dest, Symbol functionName, ArgumentList args) {
         super(id);
         this.id = id;
-        this.dest = dest;
+        this.destinationBlock = dest;
         this.functionName = functionName;
         this.isPredefined = false;
         this.args = args;
@@ -57,7 +57,13 @@ public class Call extends TAC {
     }
 
     public boolean isPredefined() {
-        return this.isPredefined;
+        String currFunctionName = functionName.token().lexeme();
+        return (currFunctionName.equals("printInt") || currFunctionName.equals("printFloat") || currFunctionName.equals("printBool")
+            || currFunctionName.equals("readInt") || currFunctionName.equals("readFloat") || currFunctionName.equals("readBool") || currFunctionName.equals("println"));
+    }
+
+    public BasicBlock getDestinationBlock() {
+        return destinationBlock;
     }
 
     public boolean hasArgs() {

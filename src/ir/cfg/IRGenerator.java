@@ -55,6 +55,7 @@ import ir.tac.Div;
 import ir.tac.Literal;
 import ir.tac.Mod;
 import ir.tac.Mul;
+import ir.tac.Neg;
 import ir.tac.Or;
 import ir.tac.Pow;
 import ir.tac.Return;
@@ -104,6 +105,7 @@ public class IRGenerator {
             functionBlock.setInstructionList(currentInstructionList);
         }
         
+        functionBlock.addInstruction(new Return(TACList.getNextTACNumber()));
         functionBlocks.put(node.getFunctionName().token().lexeme(), functionBlock);
         return functionBlock;
     }
@@ -116,27 +118,42 @@ public class IRGenerator {
     }
 
     public void visit(FunctionCall node) {
+        // System.out.println("Visiting FunctionCall: " + node.getFunctionName().token().lexeme());
+    
         if ((node.getFunctionName().token().lexeme().equals("printInt")) || (node.getFunctionName().token().lexeme().equals("printFloat")) || (node.getFunctionName().token().lexeme().equals("printBool"))
-            || (node.getFunctionName().token().lexeme().equals("readInt")) || (node.getFunctionName().token().lexeme().equals("readFloat")) || (node.getFunctionName().token().lexeme().equals("readBool")) || (node.getFunctionName().token().lexeme().equals("println"))) {
-                if (node.getArgumentList().getExpressionParameters().size() > 0) {
-                    if (node.getArgumentList().getExpressionParameters().get(0) instanceof FunctionCall) {
-                        visit(node.getArgumentList().getExpressionParameters().get(0));
-                    }
+                || (node.getFunctionName().token().lexeme().equals("readInt")) || (node.getFunctionName().token().lexeme().equals("readFloat")) || (node.getFunctionName().token().lexeme().equals("readBool")) || (node.getFunctionName().token().lexeme().equals("println"))) {
+            // System.out.println("Entering standard function call");
+            if (node.getArgumentList().getExpressionParameters().size() > 0) {
+                if (node.getArgumentList().getExpressionParameters().get(0) instanceof FunctionCall) {
+                    visit(node.getArgumentList().getExpressionParameters().get(0));
                 }
-                currentInstructionList.addInstruction(new Call(BasicBlock.getNextBlockNumber(), node.getFunctionName(), node.getArgumentList()));
-                return;
             }
-
+            currentInstructionList.addInstruction(new Call(TACList.getNextTACNumber(), node.getFunctionName(), node.getArgumentList()));
+            // // System.out.println("LatestVariable might not be updated by standard function calls");
+            return;
+        }
+    
+        // System.out.println("Entering user-defined function call: " + node.getFunctionName().token().lexeme());
         BasicBlock functionBlock = functionBlocks.get(node.getFunctionName().token().lexeme());
         
-        currentInstructionList.addInstruction(new Call(BasicBlock.getNextBlockNumber(), functionBlock, node.getFunctionName(), node.getArgumentList()));
-        previousBlock.addSuccessor(functionBlock);
+        if (functionBlock == null) {
+            System.err.println("Error: Function block not found for " + node.getFunctionName().token().lexeme());
+        } else {
+            currentInstructionList.addInstruction(new Call(TACList.getNextTACNumber(), functionBlock, node.getFunctionName(), node.getArgumentList()));
+            previousBlock.addSuccessor(functionBlock);
+            // System.out.println("Function call added to currentInstructionList");
+        }
     }
+    
 
     public void visit(ReturnStatement node) {
-        // currentInstructionList.addInstruction(ne);
-        visit(node.getRelation());
-        currentInstructionList.addInstruction(new Return(BasicBlock.getNextBlockNumber()));
+        if (node.hasRelation()) {
+            visit(node.getRelation());
+            currentInstructionList.addInstruction(new Return(BasicBlock.getNextBlockNumber(), currentInstructionList.getLatestVariable()));
+        }
+        else {
+            currentInstructionList.addInstruction(new Return(BasicBlock.getNextBlockNumber()));
+        }
     }
 
     public void visit(StatementSequence node) {
@@ -158,15 +175,19 @@ public class IRGenerator {
         // create blocks 
         BasicBlock thenBlock = new BasicBlock(BasicBlock.getNextBlockNumber(), thenList, null, null);
         BasicBlock blockAfterIf = new BasicBlock(BasicBlock.getNextBlockNumber(), new TACList(), null, null);
+        BasicBlock elseBlock = null;
+
+        currentInstructionList.addInstruction(new BRA(TACList.getNextTACNumber(), blockAfterIf));
 
         // if else block, then get list of else instructions
         if (node.hasElseBlock()) {
             TACList elseList = new TACList();
             currentInstructionList = elseList;
             visit(node.getElseBlock());
+            currentInstructionList.addInstruction(new BRA(TACList.getNextTACNumber(), blockAfterIf));
             isFirstBlock = false;
 
-            BasicBlock elseBlock = new BasicBlock(BasicBlock.getNextBlockNumber(), elseList, null, null);
+            elseBlock = new BasicBlock(BasicBlock.getNextBlockNumber(), elseList, null, null);
             previousBlock.addSuccessor(elseBlock, "fall-through");
             elseBlock.addSuccessor(blockAfterIf);
 
@@ -186,34 +207,64 @@ public class IRGenerator {
 
         if (relationSymbol != null) {
             if (relationSymbol.token().lexeme().equals("==")) {
-                previousBlock.addInstruction(new BEQ(TACList.getNextTACNumber(), previousBlock.getInstructions().getLatestVariable(), thenBlock.getID()));
+                if (node.hasElseBlock()) {
+                    previousBlock.addInstruction(new BEQ(TACList.getNextTACNumber(), previousBlock.getInstructions().getLatestVariable(), thenBlock, elseBlock));
+                }
+                else {
+                    previousBlock.addInstruction(new BEQ(TACList.getNextTACNumber(), previousBlock.getInstructions().getLatestVariable(), thenBlock, blockAfterIf));
+                }   
             }
             if (relationSymbol.token().lexeme().equals("!=")) {
-                previousBlock.addInstruction(new BNE(TACList.getNextTACNumber(), previousBlock.getInstructions().getLatestVariable(), thenBlock.getID()));
+                if (node.hasElseBlock()) {
+                    previousBlock.addInstruction(new BNE(TACList.getNextTACNumber(), previousBlock.getInstructions().getLatestVariable(), thenBlock, elseBlock));
+                }
+                else {
+                    previousBlock.addInstruction(new BNE(TACList.getNextTACNumber(), previousBlock.getInstructions().getLatestVariable(), thenBlock, blockAfterIf));
+                }
             }
             if (relationSymbol.token().lexeme().equals("<")) {
-                previousBlock.addInstruction(new BLT(TACList.getNextTACNumber(), previousBlock.getInstructions().getLatestVariable(), thenBlock.getID()));
+                if (node.hasElseBlock()) {
+                    previousBlock.addInstruction(new BLT(TACList.getNextTACNumber(), previousBlock.getInstructions().getLatestVariable(), thenBlock, elseBlock));
+                }
+                else {
+                    previousBlock.addInstruction(new BLT(TACList.getNextTACNumber(), previousBlock.getInstructions().getLatestVariable(), thenBlock, blockAfterIf));
+                }
             }
             if (relationSymbol.token().lexeme().equals("<=")) {
-                previousBlock.addInstruction(new BLE(TACList.getNextTACNumber(), previousBlock.getInstructions().getLatestVariable(), thenBlock.getID()));
+                if (node.hasElseBlock()) {
+                    previousBlock.addInstruction(new BLE(TACList.getNextTACNumber(), previousBlock.getInstructions().getLatestVariable(), thenBlock, elseBlock));
+                }
+                else {
+                    previousBlock.addInstruction(new BLE(TACList.getNextTACNumber(), previousBlock.getInstructions().getLatestVariable(), thenBlock, blockAfterIf));
+                }
             }
             if (relationSymbol.token().lexeme().equals(">")) {
-                previousBlock.addInstruction(new BGT(TACList.getNextTACNumber(), previousBlock.getInstructions().getLatestVariable(), thenBlock.getID()));
+                if (node.hasElseBlock()) {
+                    previousBlock.addInstruction(new BGT(TACList.getNextTACNumber(), previousBlock.getInstructions().getLatestVariable(), thenBlock, elseBlock));
+                }
+                else {
+                    previousBlock.addInstruction(new BGT(TACList.getNextTACNumber(), previousBlock.getInstructions().getLatestVariable(), thenBlock, blockAfterIf));
+                }
             }
             if (relationSymbol.token().lexeme().equals(">=")) {
-                previousBlock.addInstruction(new BGE(TACList.getNextTACNumber(), previousBlock.getInstructions().getLatestVariable(), thenBlock.getID()));
+                if (node.hasElseBlock()) {
+                    previousBlock.addInstruction(new BGE(TACList.getNextTACNumber(), previousBlock.getInstructions().getLatestVariable(), thenBlock, elseBlock));
+                }
+                else {
+                    previousBlock.addInstruction(new BGE(TACList.getNextTACNumber(), previousBlock.getInstructions().getLatestVariable(), thenBlock, blockAfterIf));
+                }
             }
         }
         else if (node.getRelation() instanceof BoolLiteral) {
             if (((BoolLiteral) node.getRelation()).getBoolean().token().lexeme().equals("true")) {
-                previousBlock.addInstruction(new BRA(TACList.getNextTACNumber(), thenBlock.getID()));
+                previousBlock.addInstruction(new BRA(TACList.getNextTACNumber(), thenBlock));
             }
             if (((BoolLiteral) node.getRelation()).getBoolean().token().lexeme().equals("false")) {
                 if (node.hasElseBlock()) {
-                    previousBlock.addInstruction(new BRA(TACList.getNextTACNumber(), elseBlockID));
+                    previousBlock.addInstruction(new BRA(TACList.getNextTACNumber(), elseBlock));
                 }
                 else {
-                    previousBlock.addInstruction(new BRA(TACList.getNextTACNumber(), blockAfterIf.getID()));
+                    previousBlock.addInstruction(new BRA(TACList.getNextTACNumber(), blockAfterIf));
                 }   
             }
         }
@@ -227,7 +278,7 @@ public class IRGenerator {
 
         TACList relationList = new TACList();
         currentInstructionList = relationList;
-        visit(node.getRelation());
+        Symbol relationSymbol = visit(node.getRelation());
 
         // get then list of then instructions
         TACList innerStatSeq = new TACList();
@@ -243,9 +294,10 @@ public class IRGenerator {
 
         // if else block, then get list of else instructions
         previousBlock.addSuccessor(relationBlock, "while condition");
-        relationBlock.addSuccessor(statSeqBlock, "Branch inside while loop");
         relationBlock.addSuccessor(blockAfterWhile, "Fall through");
-        statSeqBlock.addSuccessor(blockAfterWhile);
+        relationBlock.addSuccessor(statSeqBlock, "Branch inside while loop");
+       
+        // statSeqBlock.addSuccessor(blockAfterWhile);
         statSeqBlock.addSuccessor(relationBlock, "Loop condition");
 
         relationBlock.addPredecessor(previousBlock);
@@ -255,6 +307,37 @@ public class IRGenerator {
         statSeqBlock.addPredecessor(statSeqBlock);
         relationBlock.addPredecessor(statSeqBlock);
         
+        if (relationSymbol != null) {
+            if (relationSymbol.token().lexeme().equals("==")) {
+                relationBlock.addInstruction(new BEQ(TACList.getNextTACNumber(), relationBlock.getInstructions().getLatestVariable(), statSeqBlock, blockAfterWhile));
+            }
+            if (relationSymbol.token().lexeme().equals("!=")) {
+                relationBlock.addInstruction(new BNE(TACList.getNextTACNumber(), relationBlock.getInstructions().getLatestVariable(), statSeqBlock, blockAfterWhile));
+            }
+            if (relationSymbol.token().lexeme().equals("<")) {
+                relationBlock.addInstruction(new BLT(TACList.getNextTACNumber(), relationBlock.getInstructions().getLatestVariable(), statSeqBlock, blockAfterWhile));
+            }
+            if (relationSymbol.token().lexeme().equals("<=")) {
+                relationBlock.addInstruction(new BLE(TACList.getNextTACNumber(), relationBlock.getInstructions().getLatestVariable(), statSeqBlock, blockAfterWhile));
+            }
+            if (relationSymbol.token().lexeme().equals(">")) {
+                relationBlock.addInstruction(new BGT(TACList.getNextTACNumber(), relationBlock.getInstructions().getLatestVariable(), statSeqBlock, blockAfterWhile));
+            }
+            if (relationSymbol.token().lexeme().equals(">=")) {
+                relationBlock.addInstruction(new BGE(TACList.getNextTACNumber(), relationBlock.getInstructions().getLatestVariable(), statSeqBlock, blockAfterWhile));
+            }
+        }
+        else if (node.getRelation() instanceof BoolLiteral) {
+            if (((BoolLiteral) node.getRelation()).getBoolean().token().lexeme().equals("true")) {
+                relationBlock.addInstruction(new BRA(TACList.getNextTACNumber(), statSeqBlock));
+            }
+            if (((BoolLiteral) node.getRelation()).getBoolean().token().lexeme().equals("false")) {
+                relationBlock.addInstruction(new BRA(TACList.getNextTACNumber(), blockAfterWhile));
+            }
+        }
+
+        blockAfterWhile.addInstruction(new BRA(TACList.getNextTACNumber(), blockAfterWhile));
+        statSeqBlock.addInstruction(new BRA(TACList.getNextTACNumber(), relationBlock));
         
         previousBlock = blockAfterWhile;
         currentInstructionList = blockAfterWhile.getInstructions();
@@ -289,7 +372,14 @@ public class IRGenerator {
 
     public void visit(Assignment node) {
         Variable dest = new Variable(node.getIdent());
+        // System.out.println("Before visit: " + (currentInstructionList.getLatestVariable() != null ? currentInstructionList.getLatestVariable().toString() : "null"));
         visit(node.getRelation());
+        // System.out.println("After visit: " + (currentInstructionList.getLatestVariable() != null ? currentInstructionList.getLatestVariable().toString() : "null"));
+        
+        dest.setIsBool(currentInstructionList.getLatestVariable().isBool());
+        dest.setIsFloat(currentInstructionList.getLatestVariable().isFloat());
+        dest.setIsInt(currentInstructionList.getLatestVariable().isInt());
+
         currentInstructionList.addInstruction(new Assign(TACList.getNextTACNumber(), dest, currentInstructionList.getLatestVariable()));
         currentInstructionList.setLatestVariable(dest);
     }
@@ -305,6 +395,10 @@ public class IRGenerator {
         Variable leftLatest = currentInstructionList.getLatestVariable();
         visit(node.getRightSide());
         Variable rightLatest = currentInstructionList.getLatestVariable();
+
+        dest.setIsBool(leftLatest.isBool());
+        dest.setIsFloat(leftLatest.isFloat());
+        dest.setIsInt(leftLatest.isInt());
         
         currentInstructionList.addInstruction(new Add(TACList.getNextTACNumber(), dest, leftLatest, rightLatest));
         currentInstructionList.setLatestVariable(dest);
@@ -317,6 +411,10 @@ public class IRGenerator {
         visit(node.getRightSide());
         Variable rightLatest = currentInstructionList.getLatestVariable();
 
+        dest.setIsBool(leftLatest.isBool());
+        dest.setIsFloat(leftLatest.isFloat());
+        dest.setIsInt(leftLatest.isInt());
+
         currentInstructionList.addInstruction(new Sub(TACList.getNextTACNumber(), dest, leftLatest, rightLatest));
         currentInstructionList.setLatestVariable(dest);
     }
@@ -328,6 +426,10 @@ public class IRGenerator {
         visit(node.getRightSide());
         Variable rightLatest = currentInstructionList.getLatestVariable();
 
+        dest.setIsBool(leftLatest.isBool());
+        dest.setIsFloat(leftLatest.isFloat());
+        dest.setIsInt(leftLatest.isInt());
+
         currentInstructionList.addInstruction(new Mul(TACList.getNextTACNumber(), dest, leftLatest, rightLatest));
         currentInstructionList.setLatestVariable(dest);
     }
@@ -338,6 +440,10 @@ public class IRGenerator {
         Variable leftLatest = currentInstructionList.getLatestVariable();
         visit(node.getRightSide());
         Variable rightLatest = currentInstructionList.getLatestVariable();
+
+        dest.setIsBool(leftLatest.isBool());
+        dest.setIsFloat(leftLatest.isFloat());
+        dest.setIsInt(leftLatest.isInt());
         
         currentInstructionList.addInstruction(new Div(TACList.getNextTACNumber(), dest, leftLatest, rightLatest));
         currentInstructionList.setLatestVariable(dest);
@@ -349,6 +455,10 @@ public class IRGenerator {
         Variable leftLatest = currentInstructionList.getLatestVariable();
         visit(node.getRightSide());
         Variable rightLatest = currentInstructionList.getLatestVariable();
+
+        dest.setIsBool(leftLatest.isBool());
+        dest.setIsFloat(leftLatest.isFloat());
+        dest.setIsInt(leftLatest.isInt());
         
         currentInstructionList.addInstruction(new Mod(TACList.getNextTACNumber(), dest, leftLatest, rightLatest));
         currentInstructionList.setLatestVariable(dest);
@@ -360,6 +470,10 @@ public class IRGenerator {
         Variable leftLatest = currentInstructionList.getLatestVariable();
         visit(node.getRightSide());
         Variable rightLatest = currentInstructionList.getLatestVariable();
+
+        dest.setIsBool(leftLatest.isBool());
+        dest.setIsFloat(leftLatest.isFloat());
+        dest.setIsInt(leftLatest.isInt());
         
         currentInstructionList.addInstruction(new Pow(TACList.getNextTACNumber(), dest, leftLatest, rightLatest));
         currentInstructionList.setLatestVariable(dest);
@@ -369,6 +483,10 @@ public class IRGenerator {
         Variable destination = new Variable(new Symbol(new Token("t" + BasicBlock.getNextTempNumber(), node.charPosition(), node.lineNumber())));
         Value rightValue = new Literal(node.getInteger());
 
+        destination.setIsBool(false);
+        destination.setIsFloat(false);
+        destination.setIsInt(true);
+
         currentInstructionList.addInstruction(new Assign(TACList.getNextTACNumber(), destination, rightValue));
         currentInstructionList.setLatestVariable(destination);
     }
@@ -377,14 +495,22 @@ public class IRGenerator {
         Variable destination = new Variable(new Symbol(new Token("t" + BasicBlock.getNextTempNumber(), node.charPosition(), node.lineNumber())));
         Value rightValue = new Literal(node.getFloat());
 
+        destination.setIsBool(false);
+        destination.setIsFloat(true);
+        destination.setIsInt(false);
+
         currentInstructionList.addInstruction(new Assign(TACList.getNextTACNumber(), destination, rightValue));
         currentInstructionList.setLatestVariable(destination);
     }
 
     public void visit(BoolLiteral node) {
-        // System.out.println("here");
+        // // System.out.println("here");
         Variable destination = new Variable(new Symbol(new Token("t" + BasicBlock.getNextTempNumber(), node.charPosition(), node.lineNumber())));
         Value rightValue = new Literal(node.getBoolean());
+
+        destination.setIsBool(true);
+        destination.setIsFloat(false);
+        destination.setIsInt(false);
 
         currentInstructionList.addInstruction(new Assign(TACList.getNextTACNumber(), destination, rightValue));
         currentInstructionList.setLatestVariable(destination);
@@ -396,6 +522,10 @@ public class IRGenerator {
         Variable leftLatest = currentInstructionList.getLatestVariable();
         visit(node.getRightSide());
         Variable rightLatest = currentInstructionList.getLatestVariable();
+
+        dest.setIsBool(leftLatest.isBool());
+        dest.setIsFloat(leftLatest.isFloat());
+        dest.setIsInt(leftLatest.isInt());
         
         currentInstructionList.addInstruction(new And(TACList.getNextTACNumber(), dest, leftLatest, rightLatest));
         currentInstructionList.setLatestVariable(dest);
@@ -407,8 +537,20 @@ public class IRGenerator {
         Variable leftLatest = currentInstructionList.getLatestVariable();
         visit(node.getRightSide());
         Variable rightLatest = currentInstructionList.getLatestVariable();
+
+        dest.setIsBool(leftLatest.isBool());
+        dest.setIsFloat(leftLatest.isFloat());
+        dest.setIsInt(leftLatest.isInt());
         
         currentInstructionList.addInstruction(new Or(TACList.getNextTACNumber(), dest, leftLatest, rightLatest));
+        currentInstructionList.setLatestVariable(dest);
+    }
+
+    public void visit(LogicalNot node) {
+        Variable dest = new Variable(new Symbol(new Token("t" + BasicBlock.getNextTempNumber(), node.charPosition(), node.lineNumber())));
+        visit(node.getExpression());
+
+        currentInstructionList.addInstruction(new Neg(TACList.getNextTACNumber(), dest, currentInstructionList.getLatestVariable()));
         currentInstructionList.setLatestVariable(dest);
     }
 
@@ -419,6 +561,10 @@ public class IRGenerator {
         visit(node.getRightSide());
         Variable rightLatest = currentInstructionList.getLatestVariable();
         
+        dest.setIsBool(leftLatest.isBool());
+        dest.setIsFloat(leftLatest.isFloat());
+        dest.setIsInt(leftLatest.isInt());
+        
         currentInstructionList.addInstruction(new Comparison(TACList.getNextTACNumber(), dest, leftLatest, rightLatest, node.getRelation()));
         currentInstructionList.setLatestVariable(dest);
     }
@@ -426,6 +572,9 @@ public class IRGenerator {
     public void visit(VariableReference node) {
         // Variable destination = new Variable(new Symbol(new Token("t" + BasicBlock.getNextTempNumber(), node.charPosition(), node.lineNumber())));
         Variable rightValue = new Variable(new Symbol(node.getIdent().token()));
+        rightValue.setIsBool(node.isBool());
+        rightValue.setIsFloat(node.isFloat());
+        rightValue.setIsInt(node.isInt());
 
         // Assign assignmentTAC = new Assign(TACList.getNextTACNumber(), destination, rightValue);
         // currentInstructionList.addInstruction(assignmentTAC);
@@ -457,57 +606,76 @@ public class IRGenerator {
     }
 
     public Symbol visit(Expression node) {
+        // System.out.println("Visiting expression of type: " + node.getClass().getSimpleName());
+    
         if (node instanceof LogicalNot) {
+            // System.out.println("Entering LogicalNot");
             visit((LogicalNot) node);
         }
         else if (node instanceof LogicalAnd) {
+            // System.out.println("Entering LogicalAnd");
             visit((LogicalAnd) node);
         }
         else if (node instanceof LogicalOr) {
+            // System.out.println("Entering LogicalOr");
             visit((LogicalOr) node);
         }
         else if (node instanceof Power) {
+            // System.out.println("Entering Power");
             visit((Power) node);
         }
         else if (node instanceof Multiplication) {
+            // System.out.println("Entering Multiplication");
             visit((Multiplication) node);
         }
         else if (node instanceof Division) {
+            // System.out.println("Entering Division");
             visit((Division) node);
         }
         else if (node instanceof Modulo) {
+            // System.out.println("Entering Modulo");
             visit((Modulo) node);
         }
         else if (node instanceof Addition) {
+            // System.out.println("Entering Addition");
             visit((Addition) node);
         }
         else if (node instanceof Subtraction) {
+            // System.out.println("Entering Subtraction");
             visit((Subtraction) node);
         }
         else if (node instanceof Relation) {
+            // System.out.println("Entering Relation");
             visit((Relation) node);
+            // System.out.println("Returning symbol from Relation");
             return ((Relation) node).getRelation();
         }
         else if (node instanceof IntegerLiteral) {
+            // System.out.println("Entering IntegerLiteral");
             visit((IntegerLiteral) node);
         }
         else if (node instanceof FloatLiteral) {
+            // System.out.println("Entering FloatLiteral");
             visit((FloatLiteral) node);
         }
         else if (node instanceof BoolLiteral) {
+            // System.out.println("Entering BoolLiteral");
             visit((BoolLiteral) node);
         }
         else if (node instanceof VariableReference) {
+            // System.out.println("Entering VariableReference");
             visit((VariableReference) node);
         }
         else if (node instanceof FunctionCall) {
+            // System.out.println("Entering FunctionCall");
             visit((FunctionCall) node);
         }
-        // else {
-        //     null;
-        // }
+    
+        // If reached here, it means no specific type was matched or no returnable symbol was found
+        // System.out.println("No specific expression type matched or no symbol to return");
         return null;
     }
+    
 
     public void visit(DeclarationList node) {
         for (Declaration d : node) {

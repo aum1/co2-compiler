@@ -1,17 +1,37 @@
 package ir.tac;
 
+import ir.cfg.BasicBlock;
 import ir.cfg.TACVisitor;
 
 public class BGE extends TAC {
     private int id;
     private Variable left;
     private int right;
+    private BasicBlock trueBlockBranch;
+    private BasicBlock falseBlockBranch;
 
     public BGE(int id, Variable left, int right) {
         super(id);
         this.id = id;
         this.left = left;
         this.right = right;
+    }
+    
+    public BGE(int id, Variable left, BasicBlock right) {
+        super(id);
+        this.id = id;
+        this.left = left;
+        this.right = right.getID();
+        this.trueBlockBranch = right;
+    }
+
+    public BGE(int id, Variable left, BasicBlock trueBlock, BasicBlock falseBlock) {
+        super(id);
+        this.id = id;
+        this.left = left;
+        this.right = trueBlock.getID();
+        this.trueBlockBranch = trueBlock;
+        this.falseBlockBranch = falseBlock;
     }
 
     public Variable getLeft() {
@@ -20,6 +40,22 @@ public class BGE extends TAC {
 
     public int getRight() {
         return right;
+    }
+
+    public void setTrueBasicBlock(BasicBlock trueBlockBranch) {
+        this.trueBlockBranch = trueBlockBranch;
+    }
+
+    public BasicBlock getTrueBasicBlock() {
+        return trueBlockBranch;
+    }
+
+    public void setFalseBasicBlock(BasicBlock trueBlockBranch) {
+        this.trueBlockBranch = trueBlockBranch;
+    }
+
+    public BasicBlock getFalseBasicBlock() {
+        return falseBlockBranch;
     }
 
     @Override
