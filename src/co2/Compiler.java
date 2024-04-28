@@ -11,6 +11,7 @@ import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.security.GeneralSecurityException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -1416,8 +1417,9 @@ public class Compiler {
 
         // open file writer
         FileWriter file = null;
+        String timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new java.util.Date());
         try {
-            file = new FileWriter("optimization-outputs.txt");
+            file = new FileWriter(timeStamp + "optimization-outputs.txt");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -1426,8 +1428,6 @@ public class Compiler {
         resetAllBlocks();
         uninitializedVars(file);
         resetAllBlocks();
-        // System.out.println("Loop: " + isLoop);
-        // System.out.println("Max: " + isMax);
 
         // loop for optimization until convergence
         // if true, then loop, if not then stop after one
@@ -1526,8 +1526,13 @@ public class Compiler {
                 e.printStackTrace();
             }
         }
-
-
+        try {
+            file.close();
+        }
+        catch (IOException e) {
+            e.printStackTrace();;
+        }
+        
         return irHead.asDotGraph();
     }
 
@@ -2434,7 +2439,6 @@ public class Compiler {
         // printOutVariableRegisters(variableRegisterMap);
         this.variableRegisterMap = variableRegisterMap;
         assignRegistersToVariables(irHead, variableRegisterMap);
-        printOutVariableRegisters(variableRegisterMap);
     }
 
     public void assignRegistersToVariables(BasicBlock irHead, Map<String, Integer> variableRegisterMap) {
@@ -2641,12 +2645,12 @@ public class Compiler {
                     }
                 }
 
-                System.out.println("for instruction: " + instruction.getID());
+                // System.out.println("for instruction: " + instruction.getID());
                 ArrayList<Integer> instructionMachineCode = instructionToMachineCode(instruction, generatedCode.size(), 0);
 
-                for (int i = 0; i < instructionMachineCode.size(); i++) {
-                    System.out.print(i + ":\t" + DLX.instrString(instructionMachineCode.get(i))); // \newline included in DLX.instrString()
-                }
+                // for (int i = 0; i < instructionMachineCode.size(); i++) {
+                //     System.out.print(i + ":\t" + DLX.instrString(instructionMachineCode.get(i))); // \newline included in DLX.instrString()
+                // }
 
 
                 for (Integer code : instructionMachineCode) {
