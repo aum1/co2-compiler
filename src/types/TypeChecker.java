@@ -485,6 +485,8 @@ public class TypeChecker {
                     int nextActual = Integer.valueOf(identType.substring(identType.indexOf("[")+1, identType.indexOf("]")));
                     attemptedDimensions = attemptedDimensions.substring(attemptedDimensions.indexOf("]")+1);
                     identType = identType.substring(identType.indexOf("]")+1);
+                    System.out.println("Attemped: " + nextAttempted);
+                    System.out.println("Next actual: " + nextActual);
                     if ((nextActual <= nextAttempted) || (nextAttempted < 0)) {
                         reportError(node.lineNumber(), node.charPosition(), "Array Index Out of Bounds : " + nextAttempted + " for array " + node.getIdent().token().lexeme().substring(0, node.getIdent().token().lexeme().indexOf('[')));
                         identType = "ErrorType(Array Index Out of Bounds : " + nextAttempted + " for array " + node.getIdent().token().lexeme().substring(0, node.getIdent().token().lexeme().indexOf('[')) + ")";

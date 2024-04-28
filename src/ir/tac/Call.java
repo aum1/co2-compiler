@@ -15,6 +15,7 @@ public class Call extends TAC {
     private ArgumentList args;
     private List<Symbol> expressionList;
     private boolean hasArgs;
+    private Variable returnVariable;
 
     public Call(int id, BasicBlock dest, Symbol functionName) {
         super(id);
@@ -23,6 +24,16 @@ public class Call extends TAC {
         this.functionName = functionName;
         this.isPredefined = false;
         this.hasArgs = false;
+    }
+
+    public Call(int id, Symbol functionName, ArgumentList args, Variable dest) {
+        super(id);
+        this.id = id;
+        this.functionName = functionName;
+        this.isPredefined = true;
+        this.args = args;
+        this.hasArgs = true;
+        this.returnVariable = dest;
     }
 
     public Call(int id, BasicBlock dest, Symbol functionName, ArgumentList args) {
@@ -54,6 +65,14 @@ public class Call extends TAC {
 
     public Symbol getFunctionName() {
         return functionName;
+    }
+
+    public Variable getReturnVariable() {
+        return returnVariable;
+    }
+
+    public void setReturnVariable(Variable v) {
+        this.returnVariable = v;
     }
 
     public boolean isPredefined() {

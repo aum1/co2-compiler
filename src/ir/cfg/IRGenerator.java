@@ -117,7 +117,7 @@ public class IRGenerator {
         visit(node.getStatSeq());
     }
 
-    public void visit(FunctionCall node) {
+    public void visit(FunctionCall node, Variable dest) {
         // System.out.println("Visiting FunctionCall: " + node.getFunctionName().token().lexeme());
     
         if ((node.getFunctionName().token().lexeme().equals("printInt")) || (node.getFunctionName().token().lexeme().equals("printFloat")) || (node.getFunctionName().token().lexeme().equals("printBool"))
@@ -125,10 +125,11 @@ public class IRGenerator {
             // System.out.println("Entering standard function call");
             if (node.getArgumentList().getExpressionParameters().size() > 0) {
                 if (node.getArgumentList().getExpressionParameters().get(0) instanceof FunctionCall) {
-                    visit(node.getArgumentList().getExpressionParameters().get(0));
+                    visit(node.getArgumentList().getExpressionParameters().get(0), dest);
                 }
             }
-            currentInstructionList.addInstruction(new Call(TACList.getNextTACNumber(), node.getFunctionName(), node.getArgumentList()));
+
+            currentInstructionList.addInstruction(new Call(TACList.getNextTACNumber(), node.getFunctionName(), node.getArgumentList(), dest));
             // // System.out.println("LatestVariable might not be updated by standard function calls");
             return;
         }
@@ -148,7 +149,7 @@ public class IRGenerator {
 
     public void visit(ReturnStatement node) {
         if (node.hasRelation()) {
-            visit(node.getRelation());
+            visit(node.getRelation(), null);
             currentInstructionList.addInstruction(new Return(BasicBlock.getNextBlockNumber(), currentInstructionList.getLatestVariable()));
         }
         else {
@@ -158,12 +159,12 @@ public class IRGenerator {
 
     public void visit(StatementSequence node) {
         for (Statement s : node) {
-            visit(s);
+            visit(s, null);
         }
     }
 
     public void visit(IfStatement node) {
-        Symbol relationSymbol = visit(node.getRelation());
+        Symbol relationSymbol = visit(node.getRelation(), null);
         previousBlock.setInstructionList(currentInstructionList);
         int elseBlockID = -1;
         
@@ -278,7 +279,7 @@ public class IRGenerator {
 
         TACList relationList = new TACList();
         currentInstructionList = relationList;
-        Symbol relationSymbol = visit(node.getRelation());
+        Symbol relationSymbol = visit(node.getRelation(), null);
 
         // get then list of then instructions
         TACList innerStatSeq = new TACList();
@@ -344,7 +345,7 @@ public class IRGenerator {
     }
 
     public void visit(RepeatStatement node) {
-        visit(node.getRelation());
+        visit(node.getRelation(), null);
 
         previousBlock.setInstructionList(currentInstructionList);
 
@@ -372,9 +373,14 @@ public class IRGenerator {
 
     public void visit(Assignment node) {
         Variable dest = new Variable(node.getIdent());
-        // System.out.println("Before visit: " + (currentInstructionList.getLatestVariable() != null ? currentInstructionList.getLatestVariable().toString() : "null"));
-        visit(node.getRelation());
-        // System.out.println("After visit: " + (currentInstructionList.getLatestVariable() != null ? currentInstructionList.getLatestVariable().toString() : "null"));
+        visit(node.getRelation(), dest);
+
+        if (node.getRelation() instanceof FunctionCall) {
+            FunctionCall relationCall = (FunctionCall) node.getRelation();
+            if (relationCall.getFunctionName().token().lexeme().equals("readInt") || relationCall.getFunctionName().token().lexeme().equals("readBool") || relationCall.getFunctionName().token().lexeme().equals("readFloat")) {
+                currentInstructionList.setLatestVariable(dest);
+            }
+        }
         
         dest.setIsBool(currentInstructionList.getLatestVariable().isBool());
         dest.setIsFloat(currentInstructionList.getLatestVariable().isFloat());
@@ -391,9 +397,9 @@ public class IRGenerator {
         // return add node
 
         Variable dest = new Variable(new Symbol(new Token("t" + BasicBlock.getNextTempNumber(), node.charPosition(), node.lineNumber())));
-        visit(node.getLeftSide());
+        visit(node.getLeftSide(), dest);
         Variable leftLatest = currentInstructionList.getLatestVariable();
-        visit(node.getRightSide());
+        visit(node.getRightSide(), dest);
         Variable rightLatest = currentInstructionList.getLatestVariable();
 
         dest.setIsBool(leftLatest.isBool());
@@ -406,9 +412,9 @@ public class IRGenerator {
 
     public void visit(Subtraction node) {
         Variable dest = new Variable(new Symbol(new Token("t" + BasicBlock.getNextTempNumber(), node.charPosition(), node.lineNumber())));
-        visit(node.getLeftSide());
+        visit(node.getLeftSide(), dest);
         Variable leftLatest = currentInstructionList.getLatestVariable();
-        visit(node.getRightSide());
+        visit(node.getRightSide(), dest);
         Variable rightLatest = currentInstructionList.getLatestVariable();
 
         dest.setIsBool(leftLatest.isBool());
@@ -421,9 +427,9 @@ public class IRGenerator {
 
     public void visit(Multiplication node) {
         Variable dest = new Variable(new Symbol(new Token("t" + BasicBlock.getNextTempNumber(), node.charPosition(), node.lineNumber())));
-        visit(node.getLeftSide());
+        visit(node.getLeftSide(), dest);
         Variable leftLatest = currentInstructionList.getLatestVariable();
-        visit(node.getRightSide());
+        visit(node.getRightSide(), dest);
         Variable rightLatest = currentInstructionList.getLatestVariable();
 
         dest.setIsBool(leftLatest.isBool());
@@ -436,9 +442,9 @@ public class IRGenerator {
 
     public void visit(Division node) {
         Variable dest = new Variable(new Symbol(new Token("t" + BasicBlock.getNextTempNumber(), node.charPosition(), node.lineNumber())));
-        visit(node.getLeftSide());
+        visit(node.getLeftSide(), dest);
         Variable leftLatest = currentInstructionList.getLatestVariable();
-        visit(node.getRightSide());
+        visit(node.getRightSide(), dest);
         Variable rightLatest = currentInstructionList.getLatestVariable();
 
         dest.setIsBool(leftLatest.isBool());
@@ -451,9 +457,9 @@ public class IRGenerator {
 
     public void visit(Modulo node) {
         Variable dest = new Variable(new Symbol(new Token("t" + BasicBlock.getNextTempNumber(), node.charPosition(), node.lineNumber())));
-        visit(node.getLeftSide());
+        visit(node.getLeftSide(), dest);
         Variable leftLatest = currentInstructionList.getLatestVariable();
-        visit(node.getRightSide());
+        visit(node.getRightSide(), dest);
         Variable rightLatest = currentInstructionList.getLatestVariable();
 
         dest.setIsBool(leftLatest.isBool());
@@ -466,9 +472,9 @@ public class IRGenerator {
 
     public void visit(Power node) {
         Variable dest = new Variable(new Symbol(new Token("t" + BasicBlock.getNextTempNumber(), node.charPosition(), node.lineNumber())));
-        visit(node.getLeftSide());
+        visit(node.getLeftSide(), dest);
         Variable leftLatest = currentInstructionList.getLatestVariable();
-        visit(node.getRightSide());
+        visit(node.getRightSide(), dest);
         Variable rightLatest = currentInstructionList.getLatestVariable();
 
         dest.setIsBool(leftLatest.isBool());
@@ -518,9 +524,9 @@ public class IRGenerator {
 
     public void visit(LogicalAnd node) {
         Variable dest = new Variable(new Symbol(new Token("t" + BasicBlock.getNextTempNumber(), node.charPosition(), node.lineNumber())));
-        visit(node.getLeftSide());
+        visit(node.getLeftSide(), dest);
         Variable leftLatest = currentInstructionList.getLatestVariable();
-        visit(node.getRightSide());
+        visit(node.getRightSide(), dest);
         Variable rightLatest = currentInstructionList.getLatestVariable();
 
         dest.setIsBool(leftLatest.isBool());
@@ -533,9 +539,9 @@ public class IRGenerator {
 
     public void visit(LogicalOr node) {
         Variable dest = new Variable(new Symbol(new Token("t" + BasicBlock.getNextTempNumber(), node.charPosition(), node.lineNumber())));
-        visit(node.getLeftSide());
+        visit(node.getLeftSide(), dest);
         Variable leftLatest = currentInstructionList.getLatestVariable();
-        visit(node.getRightSide());
+        visit(node.getRightSide(), dest);
         Variable rightLatest = currentInstructionList.getLatestVariable();
 
         dest.setIsBool(leftLatest.isBool());
@@ -548,7 +554,7 @@ public class IRGenerator {
 
     public void visit(LogicalNot node) {
         Variable dest = new Variable(new Symbol(new Token("t" + BasicBlock.getNextTempNumber(), node.charPosition(), node.lineNumber())));
-        visit(node.getExpression());
+        visit(node.getExpression(), dest);
 
         currentInstructionList.addInstruction(new Neg(TACList.getNextTACNumber(), dest, currentInstructionList.getLatestVariable()));
         currentInstructionList.setLatestVariable(dest);
@@ -556,9 +562,9 @@ public class IRGenerator {
 
     public void visit(Relation node) {
         Variable dest = new Variable(new Symbol(new Token("t" + BasicBlock.getNextTempNumber(), node.charPosition(), node.lineNumber())));
-        visit(node.getLeftSide());
+        visit(node.getLeftSide(), dest);
         Variable leftLatest = currentInstructionList.getLatestVariable();
-        visit(node.getRightSide());
+        visit(node.getRightSide(), dest);
         Variable rightLatest = currentInstructionList.getLatestVariable();
         
         dest.setIsBool(leftLatest.isBool());
@@ -581,7 +587,7 @@ public class IRGenerator {
         currentInstructionList.setLatestVariable(rightValue);
     }
 
-    public void visit(Statement node) {
+    public void visit(Statement node, Variable dest) {
         if (node instanceof Assignment) {
             visit((Assignment) node);
         }
@@ -598,14 +604,14 @@ public class IRGenerator {
             visit((WhileStatement) node);
         }
         else if (node instanceof FunctionCall) {
-            visit((FunctionCall) node);
+            visit((FunctionCall) node, dest);
         }   
         // else {
         //     return null;
         // }
     }
 
-    public Symbol visit(Expression node) {
+    public Symbol visit(Expression node, Variable dest) {
         // System.out.println("Visiting expression of type: " + node.getClass().getSimpleName());
     
         if (node instanceof LogicalNot) {
@@ -668,7 +674,7 @@ public class IRGenerator {
         }
         else if (node instanceof FunctionCall) {
             // System.out.println("Entering FunctionCall");
-            visit((FunctionCall) node);
+            visit((FunctionCall) node, dest);
         }
     
         // If reached here, it means no specific type was matched or no returnable symbol was found
