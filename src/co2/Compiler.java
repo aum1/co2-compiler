@@ -3624,15 +3624,36 @@ public class Compiler {
             switch (node.getFunctionName().token().lexeme()) {
                 case "readInt":
                     opCode = 56;
-                    toReturn.add(DLX.assemble(opCode, node.getDest().getMachineCodeRepresentation()));
+                    // System.out.println(node.getReturnVariable().getMachineCodeRepresentation());
+                    int readIntRegisterToSet = node.getReturnVariable().getMachineCodeRepresentation();
+                    boolean readIntRegisterSpilled = false;
+
+                    if (readIntRegisterToSet == -1) {
+                        if (variableToOffset.containsKey(node.getReturnVariable().getSymbol().token().lexeme())) {
+                            toReturn.add(DLX.assemble(40, rightSpilledRegister, 30, variableToOffset.get(node.getReturnVariable().getSymbol().token().lexeme())));
+                            readIntRegisterToSet = rightSpilledRegister;
+                        }
+                        else {
+                            variableToOffset.put(node.getReturnVariable().getSymbol().token().lexeme(), currentOffset);
+                            currentOffset -= 4;
+                            readIntRegisterToSet = 25;
+                        }
+                        readIntRegisterSpilled = true;
+                    }
+                    // System.out.println(readIntRegisterToSet);
+                    toReturn.add(DLX.assemble(opCode, readIntRegisterToSet));
+
+                    if (readIntRegisterSpilled) {
+                        toReturn.add(DLX.assemble(43, readIntRegisterToSet, 30, variableToOffset.get(node.getReturnVariable().getSymbol().token().lexeme())));
+                    }
                     return toReturn;
                 case "readFloat":
                     opCode = 57;
-                    toReturn.add(DLX.assemble(opCode, node.getDest().getMachineCodeRepresentation()));
+                    toReturn.add(DLX.assemble(opCode, node.getReturnVariable().getMachineCodeRepresentation()));
                     return toReturn;
                 case "readBool":
                     opCode = 58;
-                    toReturn.add(DLX.assemble(opCode, node.getDest().getMachineCodeRepresentation()));
+                    toReturn.add(DLX.assemble(opCode, node.getReturnVariable().getMachineCodeRepresentation()));
                     return toReturn;
                 case "printInt":
                     opCode = 59;
@@ -3657,7 +3678,7 @@ public class Compiler {
 
                     if (registerToSetBoolean == -1) {
                         toReturn.add(DLX.assemble(40, rightSpilledRegister, 30, variableToOffset.get(registerStringBoolean)));
-                        registerToSet = rightSpilledRegister;
+                        registerToSetBoolean = rightSpilledRegister;
                     }
 
                     toReturn.add(DLX.assemble(opCode, registerToSetBoolean));
