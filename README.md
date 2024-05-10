@@ -1,5 +1,7 @@
 ## Compiler for Co2
 
+![Texas A&M CSCE Department](https://github.com/aum1/co2-compiler/blob/main/CSCE_logo.png)
+
 Our Compiler converts and executes the code, following the language of CO2. The compiler was a semester-long project for CSCE434 at Texas A&M, taught by Dr. Nguyen (https://khanhtn.engr.tamu.edu/). This language allows for features such as if statements, for loops, while loops, functions, and more. Our compiler takes in an input file and pipelines the inputs to a scanner, parser, type checker, optimizer, and a code generator. The compiler can optimize the code by running constant folding, constant propagation, copy propagation, orphan function elimination, common subexpression elimination, and dead code elimination. Our code compiles and generates machine code for the DLX architecture, which contains a maximum of 24 general use registers, 7 special registers, and memory. The final project is around 11,600 lines of code and 750 comments.
 
 ## Implementation
